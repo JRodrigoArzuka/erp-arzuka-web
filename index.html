@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ERP Arzuka - Proveedores</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .card { border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .header-erp { 
+            background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%); 
+            color: white; 
+            padding: 30px 20px; 
+            margin-bottom: 30px; 
+            border-radius: 0 0 20px 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-erp text-center shadow">
+        <h1>📦 Gestión de Proveedores</h1>
+        <p class="mb-0">Conectado a Google Sheets via API</p>
+    </div>
+
+    <div class="container">
+        <div class="card p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3 class="text-primary">Lista de Proveedores</h3>
+                <button id="btnCargar" class="btn btn-success fw-bold" onclick="cargarDatos()">
+                    🔄 Cargar Datos
+                </button>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle" id="tablaProveedores">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Empresa / Nombre</th>
+                            <th>RUC / DNI</th>
+                            <th>Teléfono</th>
+                            <th>Dirección</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuerpoTabla">
+                        <tr>
+                            <td colspan="4" class="text-center text-muted py-5">
+                                <i>Haz clic en el botón "Cargar Datos" para conectar.</i>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ⬇️⬇️⬇️ AQUÍ DEBES PEGAR LA URL DE TU APPS SCRIPT ⬇️⬇️⬇️
+        const URL_API = "https://script.google.com/macros/s/AKfycbzsojfQne5eh9V4iWCUzpcE9tlxSUL9pHMkcqWpHb0rPURDWVjCwEwH5MpdWppuE1R2/exec"; 
+
+        async function cargarDatos() {
+            const btn = document.getElementById('btnCargar');
+            const tabla = document.getElementById('cuerpoTabla');
+            
+            // 1. Estado de carga visual
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm" aria-hidden="true"></span> Cargando...';
+            tabla.innerHTML = '<tr><td colspan="4" class="text-center py-4">Conectando con el cerebro en Google Sheets...</td></tr>';
+
+            try {
+                // 2. Petición al "Cerebro" (Apps Script)
+                // Usamos el método POST para enviar la acción que queremos realizar
+                const respuesta = await fetch(URL_API, {
+                    method: "POST",
+                    body: JSON.stringify({ accion: "obtenerProveedores" })
+                });
+
+                const datos = await respuesta.json();
+
+                // 3. Renderizar (Dibujar) los datos en la tabla
+                if (datos.success) {
+                    tabla.innerHTML = ''; // Limpiar tabla
+                    
+                    // Verificar si hay proveedores
+                    if (!datos.proveedores || datos.proveedores.length === 0) {
+                        tabla.innerHTML = '<tr><td colspan="4" class="text-center py-4">No se encontraron proveedores registrados.</td></tr>';
+                        return;
+                    }
+
+                    // Dibujar cada fila
+                    datos.proveedores.forEach(prov => {
+                        const fila = `
+                            <tr>
+                                <td class="fw-bold text-primary">${prov.Nombre_Comercial || prov.Razon_Social}</td>
+                                <td><span class="badge bg-secondary">${prov.RUC || prov.DNI || '-'}</span></td>
+                                <td>${prov.Telefono_Principal || '-'}</td>
+                                <td class="text-muted small">${prov.Domicilio_Fiscal || '-'}</td>
+                            </tr>
+                        `;
+                        tabla.innerHTML += fila;
+                    });
+                } else {
+                    // Si Google devuelve un error lógico (ej: función no encontrada)
+                    tabla.innerHTML = `<tr><td colspan="4" class="text-center text-danger fw-bold">Error: ${datos.error}</td></tr>`;
+                }
+
+            } catch (error) {
+                // Si hay un error de conexión (ej: URL mal copiada, internet fallando)
+                console.error(error);
+                tabla.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Error de conexión: ${error.message}<br><small>Verifica la URL del Script</small></td></tr>`;
+            } finally {
+                // Restaurar el botón
+                btn.disabled = false;
+                btn.innerHTML = '🔄 Recargar Lista';
+            }
+        }
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
