@@ -3,115 +3,254 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Proveedores</title>
+    <title>ERP Arzuka - Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <style>
-        body { background-color: #f4f6f9; font-family: sans-serif; }
-        .header-blue { background: #0d6efd; color: white; padding: 20px; margin-bottom: 20px; text-align: center; }
-        .card { box-shadow: 0 2px 4px rgba(0,0,0,0.1); border:none; }
+        body { display: flex; height: 100vh; overflow: hidden; background-color: #f0f2f5; font-family: 'Segoe UI', sans-serif; }
+        
+        /* Estilos del Sidebar */
+        #sidebar { min-width: 260px; max-width: 260px; background: #212529; color: #fff; transition: all 0.3s; display: flex; flex-direction: column; }
+        #sidebar .logo { padding: 20px; background: #0d6efd; text-align: center; font-weight: bold; font-size: 1.2rem; }
+        #sidebar ul { list-style: none; padding: 0; margin-top: 20px; }
+        #sidebar ul li a { padding: 15px 25px; display: block; color: #adb5bd; text-decoration: none; border-left: 4px solid transparent; cursor: pointer; }
+        #sidebar ul li a:hover, #sidebar ul li a.active { background: #343a40; color: #fff; border-left-color: #0d6efd; }
+        #sidebar ul li a i { margin-right: 10px; }
+
+        /* Contenido Principal */
+        #content { flex: 1; padding: 20px; overflow-y: auto; }
+        .view-section { display: none; animation: fadeIn 0.3s; }
+        .view-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Tarjetas */
+        .card-dashboard { background: white; border-radius: 10px; border: none; box-shadow: 0 2px 10px rgba(0,0,0,0.05); padding: 20px; margin-bottom: 20px; }
     </style>
 </head>
 <body>
 
-    <div class="header-blue">
-        <h1>📦 Gestión de Proveedores</h1>
-        <p>Conectado a Google Sheets via API</p>
+    <nav id="sidebar">
+        <div class="logo"><i class="bi bi-box-seam"></i> ERP ARZUKA</div>
+        <ul>
+            <li><a onclick="nav('inicio')" id="link-inicio" class="active"><i class="bi bi-speedometer2"></i> Inicio</a></li>
+            <li><a onclick="nav('proveedores')" id="link-proveedores"><i class="bi bi-people-fill"></i> Proveedores</a></li>
+            <li><a onclick="alert('Módulo en construcción')" id="link-compras"><i class="bi bi-cart-fill"></i> Compras</a></li>
+            <li><a onclick="alert('Módulo en construcción')" id="link-inventario"><i class="bi bi-boxes"></i> Inventario</a></li>
+        </ul>
+    </nav>
+
+    <div id="content">
+        
+        <div id="view-inicio" class="view-section active">
+            <h2 class="mb-4">Bienvenido al Panel de Control</h2>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="card-dashboard text-center">
+                        <h1 class="text-primary"><i class="bi bi-people"></i></h1>
+                        <h5>Proveedores</h5>
+                        <p class="text-muted">Gestión de socios</p>
+                        <button class="btn btn-outline-primary btn-sm" onclick="nav('proveedores')">Ir al módulo</button>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card-dashboard text-center">
+                        <h1 class="text-success"><i class="bi bi-cart"></i></h1>
+                        <h5>Compras</h5>
+                        <p class="text-muted">Registro de gastos</p>
+                        <button class="btn btn-outline-success btn-sm" disabled>Próximamente</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-proveedores" class="view-section">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2>Gestión de Proveedores</h2>
+                <div>
+                    <button class="btn btn-secondary me-2" onclick="cargarProveedores()">🔄 Refrescar</button>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNuevoProv">
+                        <i class="bi bi-plus-lg"></i> Nuevo Proveedor
+                    </button>
+                </div>
+            </div>
+
+            <div class="card-dashboard p-0 overflow-hidden">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0" id="tablaProveedores">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Nombre Comercial</th>
+                                <th>RUC / DNI</th>
+                                <th>Teléfono</th>
+                                <th>Dirección</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cuerpoTablaProv">
+                            <tr><td colspan="4" class="text-center py-4 text-muted">Cargando datos...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
     </div>
 
-    <div class="container">
-        <div class="card p-4">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h3 class="text-primary">Lista de Proveedores</h3>
-                <button id="btnCargar" class="btn btn-success" onclick="cargarDatos()">
-                    🔄 Recargar Lista
-                </button>
+    <div class="modal fade" id="modalNuevoProv" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">Registrar Nuevo Proveedor</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formProveedor">
+                        <div class="mb-3">
+                            <label class="form-label">Razón Social / Nombre</label>
+                            <input type="text" class="form-control" id="txtRazonSocial" required>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Nombre Comercial</label>
+                                <input type="text" class="form-control" id="txtNombreComercial" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">RUC / DNI</label>
+                                <input type="number" class="form-control" id="txtRUC">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Teléfono</label>
+                            <input type="text" class="form-control" id="txtTelefono">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Dirección Fiscal</label>
+                            <input type="text" class="form-control" id="txtDireccion">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="guardarProveedor()">💾 Guardar</button>
+                </div>
             </div>
-
-            <div class="table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Empresa / Nombre</th>
-                            <th>RUC / DNI</th>
-                            <th>Teléfono</th>
-                            <th>Dirección</th>
-                        </tr>
-                    </thead>
-                    <tbody id="cuerpoTabla">
-                        <tr><td colspan="4" class="text-center text-muted">Esperando datos...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-            <div id="mensajeError" class="text-center mt-3 text-danger fw-bold"></div>
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // ⬇️⬇️⬇️ PEGA TU URL AQUÍ (Asegúrate que termina en /exec) ⬇️⬇️⬇️
-        const URL_API = "https://script.google.com/macros/s/AKfycbzsojfQne5eh9V4iWCUzpcE9tlxSUL9pHMkcqWpHb0rPURDWVjCwEwH5MpdWppuE1R2/exec";
-        
-        async function cargarDatos() {
-            const btn = document.getElementById('btnCargar');
-            const tabla = document.getElementById('cuerpoTabla');
-            const msgError = document.getElementById('mensajeError');
+        // ⬇️⬇️⬇️ PEGA TU URL AQUÍ ⬇️⬇️⬇️
+        const URL_API = "PEGAR_TU_URL_AQUI"; 
+
+        // --- Navegación ---
+        function nav(vista) {
+            // Ocultar todas
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('#sidebar a').forEach(el => el.classList.remove('active'));
             
-            // Resetear UI
-            btn.disabled = true;
-            btn.innerHTML = '⏳ Cargando...';
-            tabla.innerHTML = '<tr><td colspan="4" class="text-center">Conectando con Google...</td></tr>';
-            msgError.innerText = '';
+            // Mostrar seleccionada
+            document.getElementById('view-' + vista).classList.add('active');
+            document.getElementById('link-' + vista).classList.add('active');
+
+            if(vista === 'proveedores') cargarProveedores();
+        }
+
+        // --- Cargar Proveedores (LEER) ---
+        async function cargarProveedores() {
+            const tbody = document.getElementById('cuerpoTablaProv');
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4"><span class="spinner-border text-primary"></span> Cargando...</td></tr>';
 
             try {
-                // Petición POST a Google
                 const respuesta = await fetch(URL_API, {
                     method: "POST",
-                    // body: enviamos un string JSON simple
                     body: JSON.stringify({ accion: "obtenerProveedores" })
                 });
-
-                if (!respuesta.ok) {
-                    throw new Error(`Error HTTP: ${respuesta.status}`);
-                }
-
                 const datos = await respuesta.json();
 
                 if (datos.success) {
-                    tabla.innerHTML = ''; // Limpiar
-                    
+                    tbody.innerHTML = '';
                     if (!datos.proveedores || datos.proveedores.length === 0) {
-                        tabla.innerHTML = '<tr><td colspan="4" class="text-center">No hay datos.</td></tr>';
+                        tbody.innerHTML = '<tr><td colspan="4" class="text-center">No hay proveedores.</td></tr>';
                         return;
                     }
-
-                    datos.proveedores.forEach(prov => {
-                        const fila = `
+                    datos.proveedores.forEach(p => {
+                        tbody.innerHTML += `
                             <tr>
-                                <td class="fw-bold">${prov.Nombre_Comercial || prov.Razon_Social}</td>
-                                <td>${prov.RUC || prov.DNI || '-'}</td>
-                                <td>${prov.Telefono_Principal || '-'}</td>
-                                <td class="small text-muted">${prov.Domicilio_Fiscal || '-'}</td>
-                            </tr>
-                        `;
-                        tabla.innerHTML += fila;
+                                <td class="fw-bold">${p.Nombre_Comercial || p.Razon_Social}</td>
+                                <td><span class="badge bg-light text-dark border">${p.RUC || p.DNI || '-'}</span></td>
+                                <td>${p.Telefono_Principal || '-'}</td>
+                                <td class="small text-muted">${p.Domicilio_Fiscal || '-'}</td>
+                            </tr>`;
                     });
                 } else {
-                    throw new Error(datos.error || "Error desconocido del servidor");
+                    alert("Error al cargar: " + datos.error);
                 }
-
-            } catch (error) {
-                console.error(error);
-                tabla.innerHTML = '';
-                msgError.innerHTML = `Error de conexión: ${error.message} <br> Verifica la URL y los permisos "Cualquier Usuario"`;
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = '🔄 Recargar Lista';
+            } catch (e) {
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Error de conexión: ${e.message}</td></tr>`;
             }
         }
 
-        // Cargar automáticamente al abrir
-        window.onload = cargarDatos;
-    </script>
+        // --- Guardar Proveedor (ESCRIBIR) ---
+        async function guardarProveedor() {
+            const btn = document.querySelector('#modalNuevoProv .btn-primary');
+            const originalText = btn.innerHTML;
+            
+            // 1. Recolectar datos del formulario
+            const nuevoProv = {
+                datosPrincipales: {
+                    ID_Proveedor: "", // Dejar vacío para crear nuevo
+                    Razon_Social: document.getElementById('txtRazonSocial').value,
+                    Nombre_Comercial: document.getElementById('txtNombreComercial').value,
+                    RUC: document.getElementById('txtRUC').value,
+                    DNI: "", // Simplificado para el ejemplo
+                    Telefono_Principal: document.getElementById('txtTelefono').value,
+                    Domicilio_Fiscal: document.getElementById('txtDireccion').value,
+                    Tipo_Proveedor: "Formal", // Por defecto
+                    Acepta_Credito: false,
+                    Dias_Credito: 0,
+                    Metodos_Pago: "",
+                    Nro_Cuenta: "",
+                    Nro_Yape_Plin: ""
+                },
+                sucursales: [] // Array vacío por ahora para simplificar
+            };
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+            if (!nuevoProv.datosPrincipales.Razon_Social) {
+                alert("El nombre es obligatorio"); return;
+            }
+
+            // 2. Estado de carga
+            btn.disabled = true;
+            btn.innerHTML = "Guardando...";
+
+            try {
+                // 3. Enviar a Google
+                const respuesta = await fetch(URL_API, {
+                    method: "POST",
+                    body: JSON.stringify({ 
+                        accion: "guardarProveedor", 
+                        payload: nuevoProv 
+                    })
+                });
+                const datos = await respuesta.json();
+
+                if (datos.success) {
+                    alert("✅ Proveedor guardado correctamente");
+                    // Cerrar modal y recargar
+                    const modalEl = document.getElementById('modalNuevoProv');
+                    const modal = bootstrap.Modal.getInstance(modalEl);
+                    modal.hide();
+                    document.getElementById('formProveedor').reset();
+                    cargarProveedores();
+                } else {
+                    alert("❌ Error: " + datos.error);
+                }
+            } catch (e) {
+                alert("Error de conexión: " + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
+    </script>
 </body>
 </html>
