@@ -45,7 +45,7 @@
         <ul>
             <li><a onclick="nav('inicio')" id="link-inicio" class="active"><i class="bi bi-speedometer2"></i> Inicio</a></li>
             <li><a onclick="nav('proveedores')" id="link-proveedores"><i class="bi bi-people-fill"></i> Proveedores</a></li>
-            <li><a onclick="nav('usuarios')" id="link-usuarios"><i class="bi bi-person-badge-fill"></i> Usuarios y Roles</a></li>
+            <li><a onclick="nav('usuarios')" id="link-usuarios"><i class="bi bi-person-badge-fill"></i> Usuarios</a></li>
             <li><a onclick="nav('configuracion')" id="link-configuracion"><i class="bi bi-gear-fill"></i> Configuración</a></li>
             <li><a onclick="cerrarSesion()" class="text-danger"><i class="bi bi-box-arrow-left"></i> Salir</a></li>
         </ul>
@@ -65,6 +65,7 @@
                         <div class="card-dashboard text-center h-100">
                             <h1 class="text-primary"><i class="bi bi-people"></i></h1>
                             <h5>Proveedores</h5>
+                            <p class="text-muted small">Gestión de socios</p>
                             <button class="btn btn-outline-primary w-100" onclick="nav('proveedores')">Ir al módulo</button>
                         </div>
                     </div>
@@ -72,8 +73,18 @@
                         <div class="card-dashboard text-center h-100">
                             <h1 class="text-warning"><i class="bi bi-shield-lock"></i></h1>
                             <h5>Seguridad</h5>
-                            <p class="text-muted small">Gestionar empleados y roles</p>
+                            <p class="text-muted small">Usuarios y Roles</p>
                             <button class="btn btn-outline-warning w-100" onclick="nav('usuarios')">Gestionar</button>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <div class="card-dashboard text-center h-100">
+                            <h1 class="text-success"><i class="bi bi-cart"></i></h1>
+                            <h5>Compras</h5>
+                            <p class="text-muted small">Registro de gastos</p>
+                            <button class="btn btn-success w-100" onclick="abrirModalCompra()">
+                                <i class="bi bi-plus-lg"></i> Nueva Compra
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -92,164 +103,144 @@
 
             <div id="view-usuarios" class="view-section">
                 <h2>Gestión de Acceso</h2>
-                
                 <ul class="nav nav-tabs mb-3 mt-4" id="tabUsuarios" role="tablist">
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="tab-empleados" data-bs-toggle="tab" data-bs-target="#content-empleados" type="button">Empleados</button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="tab-roles" data-bs-toggle="tab" data-bs-target="#content-roles" type="button" onclick="cargarRoles()">Roles y Permisos</button>
-                    </li>
+                    <li class="nav-item" role="presentation"><button class="nav-link active" id="tab-empleados" data-bs-toggle="tab" data-bs-target="#content-empleados" type="button">Empleados</button></li>
+                    <li class="nav-item" role="presentation"><button class="nav-link" id="tab-roles" data-bs-toggle="tab" data-bs-target="#content-roles" type="button" onclick="cargarRoles()">Roles</button></li>
                 </ul>
-
                 <div class="tab-content">
                     <div class="tab-pane fade show active" id="content-empleados">
-                        <div class="d-flex justify-content-end mb-3">
-                            <button class="btn btn-primary" onclick="abrirModalUsuario()">
-                                <i class="bi bi-person-plus-fill"></i> Nuevo Empleado
-                            </button>
-                        </div>
-                        <div class="card-dashboard p-0 overflow-hidden">
-                            <table class="table table-hover align-middle mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Nombre</th>
-                                        <th>Usuario / Correo</th>
-                                        <th>Rol</th>
-                                        <th>Estado</th>
-                                        <th>Acción</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="cuerpoTablaUsuarios">
-                                    <tr><td colspan="5" class="text-center py-5 text-muted">Cargando...</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
+                        <div class="d-flex justify-content-end mb-3"><button class="btn btn-primary" onclick="abrirModalUsuario()">Nuevo Empleado</button></div>
+                        <div class="card-dashboard p-0"><table class="table table-hover align-middle mb-0"><thead class="table-light"><tr><th>Nombre</th><th>Correo</th><th>Rol</th><th>Estado</th><th>Acción</th></tr></thead><tbody id="cuerpoTablaUsuarios"></tbody></table></div>
                     </div>
-
                     <div class="tab-pane fade" id="content-roles">
-                        <div class="d-flex justify-content-end mb-3">
-                            <button class="btn btn-success" onclick="abrirModalRol()">
-                                <i class="bi bi-shield-plus"></i> Nuevo Rol
-                            </button>
-                        </div>
-                        <div class="card-dashboard p-0 overflow-hidden">
-                            <table class="table table-hover align-middle mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Nombre del Rol</th>
-                                        <th>Permisos Activos</th>
-                                        <th>Acción</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="cuerpoTablaRoles">
-                                    <tr><td colspan="3" class="text-center py-5 text-muted">Haz clic en la pestaña Roles para cargar.</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
+                        <div class="d-flex justify-content-end mb-3"><button class="btn btn-success" onclick="abrirModalRol()">Nuevo Rol</button></div>
+                        <div class="card-dashboard p-0"><table class="table table-hover align-middle mb-0"><thead class="table-light"><tr><th>Rol</th><th>Permisos</th><th>Acción</th></tr></thead><tbody id="cuerpoTablaRoles"></tbody></table></div>
                     </div>
                 </div>
             </div>
 
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalNuevaCompra" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">Registrar Compra</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formCompra">
+                        <div class="row g-3 mb-4 bg-light p-3 rounded border">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Proveedor</label>
+                                <select id="selectProveedorCompra" class="form-select"></select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Tipo Doc.</label>
+                                <select id="selectTipoComp" class="form-select"></select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">N° Documento</label>
+                                <input type="text" id="txtNumComp" class="form-control">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Fecha</label>
+                                <input type="date" id="dateFecha" class="form-control">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Almacén</label>
+                                <select id="selectAlmacen" class="form-select"></select>
+                            </div>
+                             <div class="col-md-3">
+                                <label class="form-label">Forma Pago</label>
+                                <select id="selectFormaPagoCompra" class="form-select"></select>
+                            </div>
+                             <div class="col-md-3">
+                                <label class="form-label">Estado</label>
+                                <select id="selectEstadoCompra" class="form-select"></select>
+                            </div>
+                             <div class="col-md-3">
+                                <label class="form-label fw-bold text-success">Importe Total</label>
+                                <input type="number" id="txtImporteTotal" class="form-control border-success">
+                            </div>
+                             <div class="col-md-9">
+                                <label class="form-label">Comentario</label>
+                                <input type="text" id="txtComentarioCompra" class="form-control">
+                            </div>
+                        </div>
+
+                        <h6 class="text-primary fw-bold border-bottom pb-2">Items de la Compra</h6>
+                        <div class="row g-2 align-items-end mb-3">
+                            <div class="col-md-2">
+                                <label class="small">Tipo</label>
+                                <select id="itemTipo" class="form-select form-select-sm">
+                                    <option value="Insumo">Insumo</option>
+                                    <option value="Gasto">Gasto</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="small">Descripción</label>
+                                <input type="text" id="itemDesc" class="form-control form-control-sm" placeholder="Nombre del producto">
+                            </div>
+                            <div class="col-md-1">
+                                <label class="small">Cant.</label>
+                                <input type="number" id="itemCantidad" class="form-control form-control-sm" oninput="calcularCostoItem()">
+                            </div>
+                            <div class="col-md-1">
+                                <label class="small">Unid.</label>
+                                <input type="text" id="itemUnidad" class="form-control form-control-sm" placeholder="UND">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="small">Costo Total</label>
+                                <input type="number" id="itemTotal" class="form-control form-control-sm" oninput="calcularCostoItem()">
+                            </div>
+                            <div class="col-md-1">
+                                <label class="small">Unit.</label>
+                                <input type="text" id="itemUnitario" class="form-control form-control-sm" readonly style="background-color: #e9ecef;">
+                            </div>
+                            <div class="col-md-1">
+                                <button type="button" class="btn btn-info btn-sm w-100 text-white" onclick="agregarItem()"><i class="bi bi-plus-lg"></i></button>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive border rounded">
+                            <table class="table table-sm table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Tipo</th>
+                                        <th>Descripción</th>
+                                        <th>Cant.</th>
+                                        <th class="text-end">Total</th>
+                                        <th class="text-center">Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="bodyTablaItems"></tbody>
+                                <tfoot class="table-light">
+                                    <tr>
+                                        <td colspan="3" class="text-end fw-bold">Total Calculado:</td>
+                                        <td class="text-end fw-bold text-success" id="lblGranTotal">0.00</td>
+                                        <td></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-success" id="btnGuardarCompra" onclick="guardarCompra()">Guardar Compra</button>
+                </div>
+            </div>
         </div>
     </div>
 
     <div class="modal fade" id="modalFormularioProveedor" tabindex="-1" data-bs-backdrop="static"><div class="modal-dialog modal-xl"><div class="modal-content"><div class="modal-header bg-primary text-white"><h5 class="modal-title" id="modalTituloProveedor">Registrar Proveedor</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="formProveedor"><input type="hidden" id="ID_Proveedor"><div class="form-section-title">Datos Principales</div><div class="row g-3"><div class="col-md-4"><label class="form-label">Tipo</label><select id="tipoProveedor" class="form-select" onchange="toggleDocumento()"><option value="Formal">Formal (RUC)</option><option value="Informal">Informal (DNI)</option></select></div><div class="col-md-4"><label class="form-label" id="lblDoc">RUC</label><input type="number" class="form-control" id="txtDocumento"></div><div class="col-md-4"><label class="form-label">Teléfono Principal</label><input type="text" class="form-control" id="telefonoPrincipal"></div><div class="col-md-6"><label class="form-label">Razón Social</label><input type="text" class="form-control" id="razonSocial"></div><div class="col-md-6"><label class="form-label">Nombre Comercial</label><input type="text" class="form-control" id="nombreComercial"></div><div class="col-md-12"><label class="form-label">Domicilio Fiscal</label><input type="text" class="form-control" id="domicilioFiscal"></div></div><div class="form-section-title mt-4">Información Financiera</div><div class="row g-3 align-items-center"><div class="col-md-2"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="aceptaCredito"><label class="form-check-label">¿Crédito?</label></div></div><div class="col-md-2"><label class="form-label">Días Crédito</label><input type="number" class="form-control" id="diasCredito" value="0"></div><div class="col-md-8"><label class="form-label">Métodos de Pago</label><div id="divFormasPago" class="d-flex flex-wrap gap-3 border rounded p-2 bg-light"></div></div><div class="col-md-6"><label class="form-label">N° Cuenta</label><input type="text" class="form-control" id="nroCuenta"></div><div class="col-md-6"><label class="form-label">Yape / Plin</label><input type="text" class="form-control" id="nroYapePlin"></div></div><div class="form-section-title d-flex justify-content-between align-items-center mt-4"><span>Sucursales</span><div class="input-group" style="width: 200px;"><span class="input-group-text">Cantidad</span><input type="number" class="form-control" id="numSucursales" value="0" min="0" onchange="renderSucursales()"></div></div><div id="contenedorSucursales" class="mt-2"></div></form></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" onclick="guardarProveedorCompleto()">💾 Guardar</button></div></div></div></div>
 
-    <div class="modal fade" id="modalNuevoUsuario" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title" id="tituloModalUser">Nuevo Empleado</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="formUsuario">
-                        <input type="hidden" id="idUserEdicion">
-                        <div class="mb-3">
-                            <label class="form-label">Nombre Completo</label>
-                            <input type="text" class="form-control" id="txtUserNombre" placeholder="Ej: Juan Perez">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Correo / Usuario de Acceso</label>
-                            <input type="text" class="form-control" id="txtUserCorreo">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Rol (Permisos)</label>
-                            <select class="form-select" id="txtUserRol">
-                                <option value="">Cargando roles...</option>
-                            </select>
-                        </div>
-                        <div class="mb-3 bg-light p-3 rounded border">
-                            <label class="form-label fw-bold">Seguridad</label>
-                            <input type="text" class="form-control" id="txtUserPass" value="12345678" disabled>
-                            <div class="form-text text-muted" id="helpPass">
-                                Contraseña por defecto: 12345678. El usuario deberá cambiarla.
-                            </div>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary" onclick="guardarUsuario()">Guardar Empleado</button>
-                </div>
-            </div>
-        </div>
-    </div>
+    <div class="modal fade" id="modalNuevoUsuario" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-primary text-white"><h5 class="modal-title" id="tituloModalUser">Nuevo Empleado</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="formUsuario"><input type="hidden" id="idUserEdicion"><div class="mb-3"><label class="form-label">Nombre Completo</label><input type="text" class="form-control" id="txtUserNombre"></div><div class="mb-3"><label class="form-label">Correo</label><input type="text" class="form-control" id="txtUserCorreo"></div><div class="mb-3"><label class="form-label">Rol</label><select class="form-select" id="txtUserRol"></select></div><div class="mb-3 bg-light p-3 rounded"><label class="form-label fw-bold">Seguridad</label><input type="text" class="form-control" id="txtUserPass" value="12345678" disabled><div class="form-text" id="helpPass">Contraseña por defecto: 12345678</div></div></form></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" onclick="guardarUsuario()">Guardar Empleado</button></div></div></div></div>
 
-    <div class="modal fade" id="modalNuevoRol" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header bg-success text-white">
-                    <h5 class="modal-title" id="tituloModalRol">Configurar Rol</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <input type="hidden" id="idRolEdicion">
-                    <div class="mb-3">
-                        <label class="fw-bold">Nombre del Rol</label>
-                        <input type="text" class="form-control" id="txtNombreRol" placeholder="Ej: Cajero">
-                    </div>
-                    
-                    <div class="card mb-3">
-                        <div class="card-header bg-light fw-bold text-primary">TPV (Punto de Venta)</div>
-                        <div class="card-body">
-                            <div class="form-check form-switch mb-2">
-                                <input class="form-check-input check-permiso" type="checkbox" value="TPV_ACCESO" id="p_tpv_acceso">
-                                <label class="form-check-label" for="p_tpv_acceso">Acceso a la App</label>
-                            </div>
-                            <div class="ps-4">
-                                <div class="form-check"><input class="form-check-input check-permiso" type="checkbox" value="TPV_ACEPTAR_PAGOS" id="p_tpv_pagos"><label for="p_tpv_pagos">Aceptar Pagos</label></div>
-                                <div class="form-check"><input class="form-check-input check-permiso" type="checkbox" value="TPV_APLICAR_DESCUENTOS" id="p_tpv_desc"><label for="p_tpv_desc">Aplicar Descuentos</label></div>
-                                <div class="form-check"><input class="form-check-input check-permiso" type="checkbox" value="TPV_VER_CIERRE_CAJA" id="p_tpv_cierre"><label for="p_tpv_cierre">Ver Cierre de Caja</label></div>
-                                <div class="form-check"><input class="form-check-input check-permiso" type="checkbox" value="TPV_DEVOLUCIONES" id="p_tpv_devol"><label for="p_tpv_devol">Hacer Devoluciones</label></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card">
-                        <div class="card-header bg-light fw-bold text-success">Back Office (Administración)</div>
-                        <div class="card-body">
-                            <div class="form-check form-switch mb-2">
-                                <input class="form-check-input check-permiso" type="checkbox" value="BO_ACCESO" id="p_bo_acceso">
-                                <label class="form-check-label" for="p_bo_acceso">Acceso al Panel Web</label>
-                            </div>
-                            <div class="ps-4">
-                                <div class="form-check"><input class="form-check-input check-permiso" type="checkbox" value="BO_VER_REPORTES" id="p_bo_rep"><label for="p_bo_rep">Ver Reportes</label></div>
-                                <div class="form-check"><input class="form-check-input check-permiso" type="checkbox" value="BO_GESTION_EMPLEADOS" id="p_bo_emp"><label for="p_bo_emp">Gestionar Empleados</label></div>
-                                <div class="form-check"><input class="form-check-input check-permiso" type="checkbox" value="BO_CONFIGURACION" id="p_bo_conf"><label for="p_bo_conf">Configuración Global</label></div>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-success" onclick="guardarRol()">Guardar Rol</button>
-                </div>
-            </div>
-        </div>
-    </div>
+    <div class="modal fade" id="modalNuevoRol" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-success text-white"><h5 class="modal-title" id="tituloModalRol">Configurar Rol</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="hidden" id="idRolEdicion"><div class="mb-3"><label class="fw-bold">Nombre del Rol</label><input type="text" class="form-control" id="txtNombreRol"></div><div class="card mb-3"><div class="card-header bg-light fw-bold text-primary">TPV</div><div class="card-body"><div class="form-check form-switch mb-2"><input class="form-check-input check-permiso" type="checkbox" value="TPV_ACCESO" id="p_tpv_acceso"><label class="form-check-label" for="p_tpv_acceso">Acceso a la App</label></div><div class="ps-4"><div class="form-check"><input class="form-check-input check-permiso" type="checkbox" value="TPV_ACEPTAR_PAGOS"><label>Aceptar Pagos</label></div></div></div></div></div><div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-success" onclick="guardarRol()">Guardar Rol</button></div></div></div></div>
 
     <datalist id="listaGlobalZonas"></datalist>
     <datalist id="listaGlobalUrbanizaciones"></datalist>
@@ -260,6 +251,7 @@
     <script src="js/core.js"></script>
     <script src="js/proveedores.js"></script>
     <script src="js/usuarios.js"></script>
+    <script src="js/compras.js"></script>
     <script src="js/configuracion.js"></script>
 </body>
 </html>
