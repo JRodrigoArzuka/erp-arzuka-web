@@ -1,228 +1,387 @@
 /**
- * @file Compra_Code.gs
- * @description Backend para Módulo de Compras.
- * @version 19 (Alineado EXACTAMENTE a la estructura A-O y A-J del usuario)
+ * js/compras.js
+ * Lógica del módulo de Compras (V5 - Final Completa)
+ * Incluye: Calculadora Inversa, Historial Inteligente, Sugerencias, Validación de Totales y Archivos Base64.
  */
 
-// --- CONFIGURACIÓN DE NOMBRES DE HOJAS ---
-const HOJA_COMPROBANTES = "Registro_Comprobantes";
-const HOJA_DETALLE = "Registro_Detalle_Compras";
-const HOJA_PROVEEDORES = "Proveedores"; 
-const HOJA_CONFIG = "Configuracion";
+let itemsCompra = [];
 
-// --- ROUTER API ---
-function doPost(e) {
-  const lock = LockService.getScriptLock();
-  lock.tryLock(10000); 
-
-  try {
-    const data = JSON.parse(e.postData.contents);
-    const accion = data.accion;
-    let response = {};
-
-    if (accion === 'obtenerDatosCompra') {
-      response = obtenerDatosParaFormularioCompra();
-    } 
-    else if (accion === 'obtenerUltimaCompra') {
-      response = obtenerUltimaCompraProveedor(data.payload.idProveedor);
-    }
-    else if (accion === 'guardarCompra') {
-      response = guardarRegistroCompra(data.payload);
-    } 
-    else {
-      response = { success: false, error: "Acción desconocida: " + accion };
-    }
-
-    return ContentService.createTextOutput(JSON.stringify(response))
-      .setMimeType(ContentService.MimeType.JSON);
-
-  } catch (error) {
-    return ContentService.createTextOutput(JSON.stringify({
-      success: false,
-      error: "Error Servidor: " + error.toString()
-    })).setMimeType(ContentService.MimeType.JSON);
+// --- 1. CARGA INICIAL Y APERTURA DEL MODAL ---
+async function abrirModalCompra() {
+    // Limpiar formulario previo
+    document.getElementById('formCompra').reset();
+    itemsCompra = [];
+    renderTablaItems();
     
-  } finally {
-    lock.releaseLock();
-  }
-}
-
-// --- 1. OBTENER DATOS INICIALES ---
-function obtenerDatosParaFormularioCompra() {
-  try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-    const hojaProv = ss.getSheetByName(HOJA_PROVEEDORES);
-    const hojaDet = ss.getSheetByName(HOJA_DETALLE);
+    // Establecer fecha por defecto (Hoy)
+    const dateInput = document.getElementById('dateFecha');
+    if(dateInput) dateInput.valueAsDate = new Date();
     
-    // 1. Proveedores
-    const dataProv = hojaProv ? hojaProv.getDataRange().getValues() : [];
-    const proveedores = [];
-    for(let i = 1; i < dataProv.length; i++) {
-      if(dataProv[i][0]) {
-        proveedores.push({ id: dataProv[i][0], nombre: dataProv[i][1] }); 
-      }
-    }
-
-    // 2. Sugerencias de Productos (Historial)
-    const sugerencias = [];
-    if (hojaDet) {
-      const dataDet = hojaDet.getDataRange().getValues();
-      const unicos = new Set();
-      // D: Descripcion_Compra está en índice 3
-      for(let i = 1; i < dataDet.length; i++) {
-        const desc = dataDet[i][3]; 
-        if(desc && !unicos.has(desc)) {
-          unicos.add(desc);
-          sugerencias.push(desc);
-        }
-      }
-    }
-
-    // 3. Listas y Almacenes (Hardcoded por ahora o leer de Config)
-    const listas = {
-      Tipo_Comprobante: ["Factura", "Boleta", "Recibo", "Nota Venta"],
-      Forma_Pago: ["Efectivo", "Transferencia", "Yape/Plin", "Crédito"],
-      Estado_Compra: ["Pagado", "Pendiente", "Crédito"]
-    };
-    const almacenes = [
-        { cod: "ALM-PRINCIPAL", nombre: "Almacén Principal" },
-        { cod: "COCINA", nombre: "Cocina" },
-        { cod: "BARRA", nombre: "Barra" }
-    ];
-
-    return { success: true, proveedores, almacenes, listas, sugerenciasProductos: sugerencias };
-
-  } catch (e) {
-    return { success: false, error: e.toString() };
-  }
-}
-
-// --- 2. BUSCAR HISTORIAL (Corrección de Índices) ---
-function obtenerUltimaCompraProveedor(idProveedor) {
-  try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-    const hojaComp = ss.getSheetByName(HOJA_COMPROBANTES);
-    const hojaDet = ss.getSheetByName(HOJA_DETALLE);
+    // Resetear visuales de validación
+    updateDiferenciaVisual(0);
+    const lblInfo = document.getElementById('lblUltimaCompraInfo');
+    if(lblInfo) lblInfo.innerText = "";
     
-    if (!hojaComp) return { success: false, error: "Falta hoja " + HOJA_COMPROBANTES };
+    // Limpiar input file manualmente
+    if(document.getElementById('fileComprobante')) document.getElementById('fileComprobante').value = "";
 
-    const dataComp = hojaComp.getDataRange().getValues();
-    let ultimaCompra = null;
-    
-    // Buscar de abajo hacia arriba
-    // B: ID_Proveedor es índice 1
-    for (let i = dataComp.length - 1; i >= 1; i--) {
-      if (String(dataComp[i][1]) === String(idProveedor)) { 
-        ultimaCompra = {
-          id: dataComp[i][0],         // A: ID_Comprobante
-          tipoDoc: dataComp[i][3],    // D: Tipo_Comprobante (Indice 3)
-          formaPago: dataComp[i][6],  // G: Forma_Pago (Indice 6)
-          almacen: dataComp[i][12]    // M: Almacen_Destino_Cod (Indice 12)
-        };
-        break;
-      }
-    }
-
-    if (!ultimaCompra) return { success: true, encontrado: false };
-
-    // Buscar items
-    const items = [];
-    if(hojaDet) {
-      const dataDet = hojaDet.getDataRange().getValues();
-      // B: ID_Comprobante es índice 1 en Detalle
-      for (let i = 1; i < dataDet.length; i++) {
-        if (String(dataDet[i][1]) === String(ultimaCompra.id)) {
-          items.push({
-            tipo: dataDet[i][2],        // C: Tipo_Compra
-            descripcion: dataDet[i][3], // D: Descripcion_Compra
-            unidad: dataDet[i][5],      // F: Unidad_Compra
-            precioUnit: dataDet[i][6]   // G: Costo_Unitario_Compra
-          });
-        }
-      }
-    }
-
-    return { success: true, encontrado: true, cabecera: ultimaCompra, items: items };
-
-  } catch (e) {
-    return { success: false, error: e.toString() };
-  }
-}
-
-// --- 3. GUARDAR COMPRA (Mapeo Exacto A-O y A-J) ---
-function guardarRegistroCompra(payload) {
-  try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-    const hojaComp = ss.getSheetByName(HOJA_COMPROBANTES);
-    const hojaDet = ss.getSheetByName(HOJA_DETALLE);
-
-    if (!hojaComp || !hojaDet) throw new Error("Faltan hojas de Registro.");
-
-    const cab = payload.datosComprobante;
-    const items = payload.items;
-    const archivo = payload.archivoAdjunto;
-
-    const idCompra = "COM-" + new Date().getTime();
-    
-    // Fecha Emisión
-    let dateEmision = new Date();
-    if (cab.fechaEmision) {
-      const p = cab.fechaEmision.split('-'); 
-      dateEmision = new Date(p[0], p[1] - 1, p[2]); 
-    }
-
-    // Archivo
-    let urlArchivo = "";
-    if(archivo && archivo.base64) {
-       // Aquí puedes activar la subida a Drive si configuras CARPETA_ID
-       urlArchivo = "Archivo Adjunto (Pendiente Config)"; 
-    }
-
-    const usuarioEmail = Session.getActiveUser().getEmail();
-
-    // --- GUARDAR ENCABEZADO (MAPEO EXACTO A-O) ---
-    hojaComp.appendRow([
-      idCompra,                   // A: ID_Comprobante
-      cab.proveedorId,            // B: ID_Proveedor
-      cab.proveedorNombre,        // C: Nombre_Proveedor
-      cab.tipoComprobante,        // D: Tipo_Comprobante
-      cab.numeroComprobante,      // E: Numero_Comprobante
-      dateEmision,                // F: Fecha_Emision
-      cab.formaPago,              // G: Forma_Pago
-      cab.importeTotal,           // H: Importe_Total_Pagado
-      usuarioEmail,               // I: ID_Colaborador (Usamos email del usuario activo)
-      cab.estadoCompra,           // J: Estado_Compra
-      urlArchivo,                 // K: Link_Foto
-      cab.comentario,             // L: Comentario
-      cab.almacenDestino,         // M: Almacen_Destino_Cod
-      usuarioEmail,               // N: Usuario (Email)
-      cab.descuentoGlobal || 0    // O: Descuento Global
-    ]);
-
-    // --- GUARDAR DETALLE (MAPEO EXACTO A-J) ---
-    const filas = items.map((item, idx) => {
-      const idDet = idCompra + "-" + (idx + 1);
-      return [
-        idDet,               // A: ID_Detalle
-        idCompra,            // B: ID_Comprobante
-        item.tipoCompra,     // C: Tipo_Compra
-        item.descripcion,    // D: Descripcion_Compra
-        item.cantidad,       // E: Cantidad_Compra
-        item.unidadCompra,   // F: Unidad_Compra
-        item.costoUnitario,  // G: Costo_Unitario_Compra
-        item.costoTotal,     // H: Costo_Total_Linea
-        'INGRESADO',         // I: Estado_Stock
-        item.descuento || 0  // J: Descuento Item
-      ];
+    // Mostrar estado "Cargando..." en selects
+    const selects = ['selectProveedorCompra', 'selectAlmacen', 'selectTipoComp', 'selectFormaPagoCompra', 'selectEstadoCompra'];
+    selects.forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.innerHTML = '<option>Cargando...</option>';
     });
 
-    if(filas.length > 0) {
-      hojaDet.getRange(hojaDet.getLastRow() + 1, 1, filas.length, filas[0].length).setValues(filas);
+    // Abrir Modal
+    new bootstrap.Modal(document.getElementById('modalNuevaCompra')).show();
+
+    // Llamar al Backend para llenar listas
+    // Usamos el servicio 'proveedores' (definido en config.js)
+    try {
+        const datos = await callAPI('proveedores', 'obtenerDatosCompra'); 
+        
+        if(datos.success) {
+            poblarSelect('selectProveedorCompra', datos.proveedores, 'id', 'nombre');
+            poblarSelect('selectAlmacen', datos.almacenes, 'cod', 'nombre');
+            poblarSelect('selectTipoComp', datos.listas.Tipo_Comprobante);
+            poblarSelect('selectFormaPagoCompra', datos.listas.Forma_Pago);
+            poblarSelect('selectEstadoCompra', datos.listas.Estado_Compra);
+            
+            // Llenar la lista de sugerencias (Datalist)
+            const datalist = document.getElementById('listaItemsHistoricos');
+            if(datalist && datos.sugerenciasProductos) {
+                datalist.innerHTML = '';
+                datos.sugerenciasProductos.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item;
+                    datalist.appendChild(option);
+                });
+            }
+        } else {
+            alert("Error cargando datos del servidor: " + datos.error);
+        }
+    } catch (error) {
+        console.error(error);
+        alert("Error de conexión al cargar datos iniciales.");
+    }
+}
+
+function poblarSelect(id, datos, keyVal = null, keyText = null) {
+    const sel = document.getElementById(id);
+    if(!sel) return;
+    sel.innerHTML = '<option value="">Seleccione...</option>';
+    
+    if(Array.isArray(datos)) {
+        datos.forEach(d => {
+            // Si el dato es objeto usamos las keys, si es string simple usamos el valor directo
+            let val = keyVal ? d[keyVal] : d;
+            let txt = keyText ? d[keyText] : d;
+            sel.innerHTML += `<option value="${val}">${txt}</option>`;
+        });
+    }
+}
+
+// --- 2. HISTORIAL INTELIGENTE DEL PROVEEDOR ---
+async function cargarUltimaCompraProveedor() {
+    const idProv = document.getElementById('selectProveedorCompra').value;
+    const lblInfo = document.getElementById('lblUltimaCompraInfo');
+    
+    if(!idProv) {
+        lblInfo.innerText = "";
+        return;
     }
 
-    return { success: true, message: "Compra " + idCompra + " registrada correctamente." };
+    lblInfo.innerText = "⏳ Buscando historial...";
+    
+    try {
+        const res = await callAPI('proveedores', 'obtenerUltimaCompra', { idProveedor: idProv });
 
-  } catch (e) {
-    return { success: false, error: e.toString() };
-  }
+        if (res.success && res.encontrado) {
+            const cab = res.cabecera;
+            
+            // Autocompletar Cabecera (Configuración recurrente)
+            if(cab.tipoDoc) document.getElementById('selectTipoComp').value = cab.tipoDoc;
+            if(cab.formaPago) document.getElementById('selectFormaPagoCompra').value = cab.formaPago;
+            if(cab.almacen) document.getElementById('selectAlmacen').value = cab.almacen;
+            
+            lblInfo.innerText = "✅ Datos cargados. (Items disponibles)";
+            
+            // Preguntar si quiere cargar los productos de la última vez
+            if(res.items && res.items.length > 0) {
+                if(confirm(`Este proveedor tiene ${res.items.length} productos frecuentes en su historial.\n¿Deseas cargarlos a la lista para agilizar?`)) {
+                    itemsCompra = res.items.map(i => ({
+                        tipoCompra: i.tipo || 'Insumo',
+                        descripcion: i.descripcion,
+                        cantidad: 1, // Resetear cantidad a 1 para obligar al usuario a verificar
+                        unidadCompra: i.unidad,
+                        costoUnitario: parseFloat(i.precioUnit) || 0,
+                        descuento: 0,
+                        // Recalcular total inicial basado en cantidad 1
+                        costoTotal: (parseFloat(i.precioUnit) || 0) * 1
+                    }));
+                    renderTablaItems();
+                }
+            }
+        } else {
+            lblInfo.innerText = "Proveedor nuevo o sin historial reciente.";
+        }
+    } catch (e) {
+        lblInfo.innerText = "Error consultando historial.";
+        console.error(e);
+    }
+}
+
+// --- 3. CALCULADORA INVERSA Y GESTIÓN DE ITEMS ---
+/**
+ * Lógica de cálculo bidireccional.
+ * @param {string} origen - 'total' si se editó el total, cualquier otra cosa si se editó unitario/cant/desc
+ */
+function recalcularItem(origen) {
+    // Obtener valores actuales
+    let cant = parseFloat(document.getElementById('itemCantidad').value);
+    let unit = parseFloat(document.getElementById('itemPrecioUnit').value);
+    let desc = parseFloat(document.getElementById('itemDescuento').value);
+    let total = parseFloat(document.getElementById('itemTotal').value);
+
+    // Sanitizar (Evitar NaN)
+    if(isNaN(cant)) cant = 1;
+    if(isNaN(unit)) unit = 0;
+    if(isNaN(desc)) desc = 0;
+    if(isNaN(total)) total = 0;
+
+    if (origen === 'total') {
+        // MODO INVERSO: Usuario escribió el TOTAL -> Calculamos UNITARIO
+        // Fórmula: (Total + Descuento) / Cantidad = Unitario
+        if (cant > 0) {
+            unit = (total + desc) / cant;
+            // Mostramos hasta 4 decimales en el unitario para precisión, aunque en tabla se muestren 2
+            document.getElementById('itemPrecioUnit').value = parseFloat(unit.toFixed(4));
+        }
+    } else {
+        // MODO NORMAL: Usuario escribió CANTIDAD, PRECIO o DESCUENTO -> Calculamos TOTAL
+        // Fórmula: (Cantidad * Unitario) - Descuento = Total
+        total = (cant * unit) - desc;
+        document.getElementById('itemTotal').value = total.toFixed(2);
+    }
+}
+
+function agregarItem() {
+    const tipo = document.getElementById('itemTipo').value;
+    const desc = document.getElementById('itemDesc').value;
+    const cant = parseFloat(document.getElementById('itemCantidad').value);
+    const unidad = document.getElementById('itemUnidad').value;
+    const precio = parseFloat(document.getElementById('itemPrecioUnit').value);
+    const descuento = parseFloat(document.getElementById('itemDescuento').value) || 0;
+    const total = parseFloat(document.getElementById('itemTotal').value);
+
+    // Validaciones de línea
+    if(!desc) { alert("Falta la descripción del producto."); return; }
+    if(!cant) { alert("Falta la cantidad."); return; }
+    if(isNaN(total)) { alert("El total no es válido."); return; }
+
+    // Agregar al array local
+    itemsCompra.push({
+        tipoCompra: tipo,
+        descripcion: desc,
+        cantidad: cant,
+        unidadCompra: unidad,
+        costoUnitario: precio,
+        descuento: descuento,
+        costoTotal: total
+    });
+
+    renderTablaItems();
+    
+    // Limpiar campos para ingreso rápido del siguiente item
+    document.getElementById('itemDesc').value = "";
+    document.getElementById('itemCantidad').value = "1";
+    document.getElementById('itemPrecioUnit').value = "";
+    document.getElementById('itemDescuento').value = "0";
+    document.getElementById('itemTotal').value = "";
+    document.getElementById('itemDesc').focus(); // Foco para seguir escribiendo
+}
+
+function renderTablaItems() {
+    const tbody = document.getElementById('bodyTablaItems');
+    tbody.innerHTML = "";
+    
+    let sumaSubtotales = 0;
+
+    itemsCompra.forEach((item, idx) => {
+        sumaSubtotales += item.costoTotal;
+        tbody.innerHTML += `
+            <tr class="align-middle">
+                <td>
+                    <span class="badge bg-secondary border text-light" title="${item.tipoCompra}">${item.tipoCompra.substring(0,1)}</span> 
+                    <span class="d-none d-md-inline small ms-1">${item.tipoCompra}</span>
+                </td>
+                <td>${item.descripcion}</td>
+                <td class="text-center">${item.cantidad} ${item.unidadCompra || ''}</td>
+                <td class="text-end">${item.costoUnitario.toFixed(2)}</td>
+                <td class="text-end text-danger small">${item.descuento > 0 ? '-' + item.descuento.toFixed(2) : ''}</td>
+                <td class="text-end fw-bold">${item.costoTotal.toFixed(2)}</td>
+                <td class="text-center">
+                    <button class="btn btn-link text-danger p-0" onclick="eliminarItem(${idx})" title="Eliminar línea">
+                        <i class="bi bi-x-circle-fill"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+
+    // Cálculos Globales (Pie de página)
+    const descGlobal = parseFloat(document.getElementById('txtDescuentoGlobal').value) || 0;
+    const granTotal = sumaSubtotales - descGlobal;
+
+    // Actualizar etiquetas
+    const lblGranTotal = document.getElementById('lblGranTotal');
+    if(lblGranTotal) lblGranTotal.innerText = granTotal.toFixed(2);
+    
+    // Validar contra el total de la factura (Cabecera)
+    validarTotales(granTotal);
+}
+
+function eliminarItem(idx) {
+    itemsCompra.splice(idx, 1);
+    renderTablaItems();
+}
+
+// --- 4. VALIDACIÓN VISUAL DE TOTALES ---
+function validarTotales(totalCalculadoOverride = null) {
+    const totalFactura = parseFloat(document.getElementById('txtImporteTotal').value) || 0;
+    
+    // Obtener total calculado (del argumento o del label si no se pasa)
+    let totalCalculado = totalCalculadoOverride;
+    if (totalCalculado === null) {
+        const lbl = document.getElementById('lblGranTotal');
+        totalCalculado = lbl ? parseFloat(lbl.innerText) : 0;
+    }
+
+    const diferencia = totalFactura - totalCalculado;
+    updateDiferenciaVisual(diferencia);
+}
+
+function updateDiferenciaVisual(dif) {
+    const inputDif = document.getElementById('txtDiferencia');
+    const msg = document.getElementById('msgValidacion');
+    
+    if(!inputDif) return;
+
+    inputDif.value = dif.toFixed(2);
+
+    // Usamos un margen de error de 0.05 para evitar falsos positivos por redondeo de decimales
+    if (Math.abs(dif) < 0.05) {
+        // CUADRA (Verde)
+        inputDif.style.backgroundColor = "#d1e7dd"; 
+        inputDif.style.color = "#0f5132";
+        inputDif.style.borderColor = "#badbcc";
+        if(msg) msg.innerText = "";
+    } else {
+        // NO CUADRA (Rojo)
+        inputDif.style.backgroundColor = "#f8d7da"; 
+        inputDif.style.color = "#842029";
+        inputDif.style.borderColor = "#f5c2c7";
+        if(msg) msg.innerText = "⚠️ Diferencia: Revisa los montos";
+    }
+}
+
+// --- 5. PROCESAMIENTO DE ARCHIVO (Base64) ---
+function leerArchivo(inputElement) {
+    return new Promise((resolve, reject) => {
+        const archivo = inputElement.files[0];
+        if (!archivo) { resolve(null); return; }
+        
+        // Límite de 4MB para no saturar Google Apps Script
+        if (archivo.size > 4 * 1024 * 1024) {
+            reject("El archivo es muy pesado (Máx 4MB). Comprímelo antes de subir.");
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = e => {
+            resolve({
+                nombre: archivo.name,
+                mimeType: archivo.type,
+                // Quitamos el prefijo "data:image/png;base64," para enviar solo el string
+                base64: e.target.result.split(',')[1] 
+            });
+        };
+        reader.onerror = e => reject("Error al leer el archivo local.");
+        reader.readAsDataURL(archivo);
+    });
+}
+
+// --- 6. GUARDAR COMPRA FINAL ---
+async function guardarCompra() {
+    const btn = document.getElementById('btnGuardarCompra');
+    const originalText = btn.innerHTML;
+    
+    // Validaciones Finales
+    const idProv = document.getElementById('selectProveedorCompra').value;
+    if(!idProv) { alert("⚠️ Debes seleccionar un Proveedor."); return; }
+    
+    if(itemsCompra.length === 0) { alert("⚠️ La lista de items está vacía."); return; }
+
+    // Validación de diferencia
+    const dif = parseFloat(document.getElementById('txtDiferencia').value) || 0;
+    if(Math.abs(dif) > 0.05) {
+        if(!confirm(`⚠️ ATENCIÓN:\n\nHay una diferencia de ${dif.toFixed(2)} entre el 'Total Factura' y la suma de los items.\n\n¿Estás seguro de que deseas guardar así?`)) {
+            return;
+        }
+    }
+
+    try {
+        // Bloquear botón y mostrar carga
+        btn.disabled = true; 
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Subiendo archivo...';
+
+        // Procesar Archivo
+        let datosArchivo = null;
+        const inputFile = document.getElementById('fileComprobante');
+        if(inputFile) datosArchivo = await leerArchivo(inputFile);
+
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Guardando datos...';
+
+        // Armar Payload Completo
+        const selectProv = document.getElementById('selectProveedorCompra');
+        
+        const cabecera = {
+            proveedorId: selectProv.value,
+            proveedorNombre: selectProv.options[selectProv.selectedIndex].text,
+            tipoComprobante: document.getElementById('selectTipoComp').value,
+            numeroComprobante: document.getElementById('txtNumComp').value,
+            fechaEmision: document.getElementById('dateFecha').value,
+            almacenDestino: document.getElementById('selectAlmacen').value,
+            importeTotal: parseFloat(document.getElementById('txtImporteTotal').value) || 0,
+            descuentoGlobal: parseFloat(document.getElementById('txtDescuentoGlobal').value) || 0,
+            formaPago: document.getElementById('selectFormaPagoCompra').value,
+            estadoCompra: document.getElementById('selectEstadoCompra').value,
+            comentario: document.getElementById('txtComentarioCompra').value
+        };
+
+        const payload = {
+            datosComprobante: cabecera,
+            items: itemsCompra,
+            archivoAdjunto: datosArchivo
+        };
+
+        // Enviar al Backend
+        const res = await callAPI('proveedores', 'guardarCompra', payload);
+        
+        if(res.success) {
+            alert("✅ Compra registrada con éxito!\n\n" + (res.message || ""));
+            bootstrap.Modal.getInstance(document.getElementById('modalNuevaCompra')).hide();
+            // Opcional: Aquí podrías llamar a una función para recargar una tabla de historial de compras si la tuvieras
+        } else {
+            throw new Error(res.error);
+        }
+
+    } catch (e) {
+        console.error(e);
+        alert("❌ Error al guardar: " + e.message);
+    } finally {
+        // Restaurar botón
+        btn.disabled = false; 
+        btn.innerHTML = originalText;
+    }
 }
