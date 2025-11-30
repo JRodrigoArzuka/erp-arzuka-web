@@ -82,7 +82,7 @@
                 <div id="collapseAdmin" class="accordion-collapse collapse" data-bs-parent="#menuAccordion">
                     <div class="accordion-body p-0">
                         <ul class="list-unstyled ps-3">
-                            <li><a href="#" class="text-white-50 text-decoration-none d-block py-2" onclick="nav('usuarios')"><i class="bi bi-person-badge me-2"></i> Usuarios y Roles</a></li>
+                            <li><a href="#" class="text-white-50 text-decoration-none d-block py-2" onclick="nav('usuarios')"><i class="bi bi-person-badge me-2"></i> Usuarios</a></li>
                             <li><a href="#" class="text-white-50 text-decoration-none d-block py-2" onclick="nav('configuracion')"><i class="bi bi-sliders me-2"></i> Configuración</a></li>
                         </ul>
                     </div>
@@ -96,7 +96,6 @@
                     </button>
                 </h2>
             </div>
-
         </div>
     </nav>
 
@@ -111,30 +110,18 @@
             <div id="view-inicio" class="view-section active">
                 <h2 class="mb-4">Panel de Control</h2>
                 <div class="row g-3">
-                    <div class="col-12 col-md-4">
-                        <div class="card-dashboard text-center h-100">
-                            <h1 class="text-primary"><i class="bi bi-truck"></i></h1>
-                            <h5>Logística</h5>
-                            <p class="text-muted small">Compras y Proveedores</p>
-                            <button class="btn btn-outline-primary w-100" type="button" data-bs-toggle="collapse" data-bs-target="#collapseLogistica">Abrir Menú</button>
-                        </div>
-                    </div>
-                    <div class="col-12 col-md-4">
-                        <div class="card-dashboard text-center h-100">
+                    <div class="col-md-4">
+                        <div class="card-dashboard text-center h-100" onclick="abrirModalCompra()" style="cursor:pointer;">
                             <h1 class="text-success"><i class="bi bi-cart-plus"></i></h1>
-                            <h5>Acceso Rápido</h5>
-                            <p class="text-muted small">Registrar movimiento</p>
-                            <button class="btn btn-success w-100" onclick="abrirModalCompra()">
-                                <i class="bi bi-plus-lg"></i> Nueva Compra
-                            </button>
+                            <h5>Registrar Compra</h5>
+                            <p class="text-muted small">Gasto o Insumo</p>
                         </div>
                     </div>
-                    <div class="col-12 col-md-4">
-                        <div class="card-dashboard text-center h-100">
-                            <h1 class="text-warning"><i class="bi bi-gear"></i></h1>
-                            <h5>Admin</h5>
-                            <p class="text-muted small">Usuarios y Ajustes</p>
-                            <button class="btn btn-outline-warning w-100" onclick="nav('usuarios')">Gestionar</button>
+                    <div class="col-md-4">
+                        <div class="card-dashboard text-center h-100" onclick="nav('proveedores')" style="cursor:pointer;">
+                            <h1 class="text-primary"><i class="bi bi-people"></i></h1>
+                            <h5>Proveedores</h5>
+                            <p class="text-muted small">Directorio</p>
                         </div>
                     </div>
                 </div>
@@ -152,10 +139,10 @@
             </div>
 
             <div id="view-usuarios" class="view-section">
-                <h2>Gestión de Acceso</h2>
-                <ul class="nav nav-tabs mb-3 mt-4" id="tabUsuarios" role="tablist">
-                    <li class="nav-item" role="presentation"><button class="nav-link active" id="tab-empleados" data-bs-toggle="tab" data-bs-target="#content-empleados" type="button">Empleados</button></li>
-                    <li class="nav-item" role="presentation"><button class="nav-link" id="tab-roles" data-bs-toggle="tab" data-bs-target="#content-roles" type="button" onclick="cargarRoles()">Roles</button></li>
+                <h2>Usuarios y Permisos</h2>
+                <ul class="nav nav-tabs mb-3 mt-4" id="tabUsuarios">
+                    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#content-empleados">Empleados</button></li>
+                    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#content-roles" onclick="cargarRoles()">Roles</button></li>
                 </ul>
                 <div class="tab-content">
                     <div class="tab-pane fade show active" id="content-empleados">
@@ -168,7 +155,6 @@
                     </div>
                 </div>
             </div>
-
         </div>
     </div>
 
@@ -241,7 +227,6 @@
                         </div>
 
                         <h6 class="text-primary fw-bold border-bottom pb-1 mb-3">Items <small class="text-muted fw-normal ms-2">(Calculadora Inversa Activa)</small></h6>
-                        
                         <div class="row g-1 align-items-end mb-3 p-2 border rounded bg-white shadow-sm">
                             <div class="col-md-2">
                                 <label class="small fw-bold">Tipo</label>
@@ -264,22 +249,18 @@
                                 <label class="small fw-bold">Unid.</label>
                                 <input type="text" id="itemUnidad" class="form-control form-control-sm" placeholder="UND">
                             </div>
-                            
                             <div class="col-md-2">
                                 <label class="small fw-bold text-success">P. Unit.</label>
                                 <input type="number" id="itemPrecioUnit" class="form-control form-control-sm border-success" oninput="recalcularItem('unitario')" placeholder="0.00">
                             </div>
-                            
                             <div class="col-md-1">
                                 <label class="small fw-bold text-danger">Desc.</label>
                                 <input type="number" id="itemDescuento" class="form-control form-control-sm text-danger border-danger" value="0" oninput="recalcularItem('descuento')">
                             </div>
-                            
                             <div class="col-md-2">
                                 <label class="small fw-bold text-primary">Total</label>
                                 <input type="number" id="itemTotal" class="form-control form-control-sm fw-bold text-primary border-primary" oninput="recalcularItem('total')" placeholder="0.00">
                             </div>
-                            
                             <div class="col-12 mt-2 text-end">
                                 <button type="button" class="btn btn-primary btn-sm px-4" onclick="agregarItem()"><i class="bi bi-plus-lg"></i> Agregar</button>
                             </div>
