@@ -7,44 +7,57 @@
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    
     <link rel="stylesheet" href="css/estilos.css">
 </head>
 <body>
 
-    <div id="overlay" onclick="toggleSidebar(false)"></div>
+    <div id="login-overlay" style="position: fixed; top:0; left:0; width:100%; height:100%; background: #0d6efd; z-index: 9999; display: flex; justify-content: center; align-items: center;">
+        <div class="card p-4 shadow-lg" style="width: 350px; border-radius: 15px;">
+            <div class="text-center mb-4">
+                <h3 class="fw-bold text-primary"><i class="bi bi-box-seam-fill"></i> ERP ARZUKA</h3>
+                <p class="text-muted">Acceso Restringido</p>
+            </div>
+            <div class="mb-3">
+                <label class="fw-bold small">Usuario / Correo</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-person"></i></span>
+                    <input type="text" id="loginUser" class="form-control" placeholder="admin">
+                </div>
+            </div>
+            <div class="mb-4">
+                <label class="fw-bold small">Contraseña</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-key"></i></span>
+                    <input type="password" id="loginPass" class="form-control" placeholder="********">
+                </div>
+            </div>
+            <div class="text-danger text-center mb-3 small fw-bold" id="loginError"></div>
+            <button id="btnLogin" class="btn btn-primary w-100 py-2" onclick="iniciarSesion()">INGRESAR</button>
+        </div>
+    </div>
 
     <nav id="sidebar">
-        <div class="logo" id="lblLogoText">
+        <div class="logo">
             <i class="bi bi-box-seam-fill"></i> ERP ARZUKA
         </div>
+        
+        <div class="text-center mt-3 mb-2">
+            <div class="small text-white-50">Bienvenido,</div>
+            <div id="lblUsuarioActual" class="fw-bold text-white">Cargando...</div>
+        </div>
+
         <ul>
-            <li>
-                <a onclick="nav('inicio')" id="link-inicio" class="active">
-                    <i class="bi bi-speedometer2"></i> Inicio
-                </a>
-            </li>
-            <li>
-                <a onclick="nav('proveedores')" id="link-proveedores">
-                    <i class="bi bi-people-fill"></i> Proveedores
-                </a>
-            </li>
-            <li>
-                <a onclick="nav('usuarios')" id="link-usuarios">
-                    <i class="bi bi-person-badge-fill"></i> Usuarios
-                </a>
-            </li>
-            <li>
-                <a onclick="nav('configuracion')" id="link-configuracion">
-                    <i class="bi bi-gear-fill"></i> Configuración
-                </a>
-            </li>
+            <li><a onclick="nav('inicio')" id="link-inicio" class="active"><i class="bi bi-speedometer2"></i> Inicio</a></li>
+            <li><a onclick="nav('proveedores')" id="link-proveedores"><i class="bi bi-people-fill"></i> Proveedores</a></li>
+            <li><a onclick="nav('usuarios')" id="link-usuarios"><i class="bi bi-person-badge-fill"></i> Usuarios</a></li>
+            <li><a onclick="nav('configuracion')" id="link-configuracion"><i class="bi bi-gear-fill"></i> Configuración</a></li>
+            <li><a onclick="cerrarSesion()" class="text-danger"><i class="bi bi-box-arrow-left"></i> Salir</a></li>
         </ul>
     </nav>
 
     <div id="content">
         
-        <div class="top-bar">
+        <div class="top-bar d-md-none d-flex justify-content-between align-items-center p-3 bg-white shadow-sm">
             <span class="fw-bold text-primary"><i class="bi bi-box-seam-fill"></i> ERP</span>
             <button class="btn btn-light border" onclick="toggleSidebar()">
                 <i class="bi bi-list h4 m-0"></i>
@@ -60,16 +73,8 @@
                         <div class="card-dashboard text-center h-100">
                             <h1 class="text-primary"><i class="bi bi-people"></i></h1>
                             <h5>Proveedores</h5>
-                            <p class="text-muted small">Gestión de socios y sucursales</p>
+                            <p class="text-muted small">Gestión de socios</p>
                             <button class="btn btn-outline-primary w-100" onclick="nav('proveedores')">Ir al módulo</button>
-                        </div>
-                    </div>
-                    <div class="col-12 col-md-4">
-                        <div class="card-dashboard text-center h-100">
-                            <h1 class="text-success"><i class="bi bi-cart"></i></h1>
-                            <h5>Compras</h5>
-                            <p class="text-muted small">Registro de gastos</p>
-                            <button class="btn btn-outline-success w-100" disabled>Próximamente</button>
                         </div>
                     </div>
                     <div class="col-12 col-md-4">
@@ -80,54 +85,74 @@
                             <button class="btn btn-outline-warning w-100" onclick="nav('usuarios')">Gestionar</button>
                         </div>
                     </div>
+                    <div class="col-12 col-md-4">
+                        <div class="card-dashboard text-center h-100">
+                            <h1 class="text-success"><i class="bi bi-cart"></i></h1>
+                            <h5>Compras</h5>
+                            <p class="text-muted small">Registro de gastos</p>
+                            <button class="btn btn-outline-success w-100" disabled>Próximamente</button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <div id="view-proveedores" class="view-section">
                 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-                    <h2>Gestión de Proveedores</h2>
+                    <h2>Proveedores</h2>
                     <div>
-                        <button class="btn btn-outline-secondary me-2" onclick="cargarProveedores()">
-                            <i class="bi bi-arrow-clockwise"></i>
-                        </button>
-                        <button class="btn btn-primary" onclick="abrirModalNuevoProveedor()">
-                            <i class="bi bi-plus-lg"></i> Nuevo
-                        </button>
+                        <button class="btn btn-outline-secondary me-2" onclick="cargarProveedores()">Refrescar</button>
+                        <button class="btn btn-primary" onclick="abrirModalNuevoProveedor()">+ Nuevo</button>
                     </div>
                 </div>
-
                 <div class="card-dashboard p-0 overflow-hidden">
                     <div class="table-responsive">
                         <table class="table table-hover align-middle mb-0">
                             <thead class="table-light">
                                 <tr>
                                     <th>Empresa</th>
-                                    <th>Identificación</th>
+                                    <th>ID</th>
                                     <th>Teléfono</th>
                                     <th>Acción</th>
                                 </tr>
                             </thead>
-                            <tbody id="cuerpoTablaProv">
-                                <tr><td colspan="4" class="text-center py-5 text-muted">Esperando datos...</td></tr>
-                            </tbody>
+                            <tbody id="cuerpoTablaProv"></tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
             <div id="view-usuarios" class="view-section">
-                <h2>Gestión de Usuarios</h2>
-                <div class="alert alert-info">Módulo en construcción. Aquí irá la tabla de usuarios.</div>
+                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                    <h2>Gestión de Usuarios</h2>
+                    <div>
+                        <button class="btn btn-outline-secondary me-2" onclick="cargarUsuarios()">Refrescar</button>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNuevoUsuario">+ Nuevo Usuario</button>
+                    </div>
+                </div>
+                <div class="card-dashboard p-0 overflow-hidden">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Correo / Usuario</th>
+                                    <th>Rol</th>
+                                    <th>Estado</th>
+                                    <th>Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cuerpoTablaUsuarios">
+                                <tr><td colspan="5" class="text-center py-5 text-muted">Cargando usuarios...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
 
             <div id="view-configuracion" class="view-section">
-                <h2>Configuración del Sistema</h2>
-                <div class="card-dashboard mt-3">
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Nombre del ERP</label>
-                        <input type="text" class="form-control" id="txtConfigNombreERP" placeholder="Cargando...">
-                    </div>
-                    <button class="btn btn-success" disabled>Guardar Cambios (Pronto)</button>
+                <h2>Configuración</h2>
+                <div class="alert alert-info mt-3">
+                    Aquí podrás cambiar el nombre del ERP y otros parámetros globales. (En construcción)
                 </div>
             </div>
 
@@ -190,11 +215,10 @@
                             </div>
                             <div class="col-md-8">
                                 <label class="form-label">Métodos de Pago</label>
-                                <div id="divFormasPago" class="d-flex flex-wrap gap-3 border rounded p-2 bg-light">
-                                    </div>
+                                <div id="divFormasPago" class="d-flex flex-wrap gap-3 border rounded p-2 bg-light"></div>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">N° Cuenta Bancaria</label>
+                                <label class="form-label">N° Cuenta</label>
                                 <input type="text" class="form-control" id="nroCuenta">
                             </div>
                             <div class="col-md-6">
@@ -210,15 +234,52 @@
                                 <input type="number" class="form-control" id="numSucursales" value="0" min="0" onchange="renderSucursales()">
                             </div>
                         </div>
-                        
-                        <div id="contenedorSucursales" class="mt-2">
-                            </div>
-
+                        <div id="contenedorSucursales" class="mt-2"></div>
                     </form>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary" onclick="guardarProveedorCompleto()">💾 Guardar Proveedor</button>
+                    <button type="button" class="btn btn-primary" onclick="guardarProveedorCompleto()">💾 Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalNuevoUsuario" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title">Nuevo Usuario</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formUsuario">
+                        <div class="mb-3">
+                            <label class="form-label">Nombre Completo</label>
+                            <input type="text" class="form-control" id="txtUserNombre">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Correo / Usuario</label>
+                            <input type="text" class="form-control" id="txtUserCorreo">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Contraseña Inicial</label>
+                            <input type="text" class="form-control" id="txtUserPass" value="12345678" readonly>
+                            <div class="form-text text-muted">Por defecto: 12345678</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Rol</label>
+                            <select class="form-select" id="txtUserRol">
+                                <option value="Administrador">Administrador</option>
+                                <option value="Vendedor">Vendedor</option>
+                                <option value="Almacenero">Almacenero</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-warning" onclick="guardarUsuario()">Crear Usuario</button>
                 </div>
             </div>
         </div>
@@ -229,5 +290,5 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
-    <script src="js/core.js"></script>         <script src="js/proveedores.js"></script>  <script src="js/usuarios.js"></script>     <script src="js/configuracion.js"></script> </body>
+    <script src="js/config.js"></script>         <script src="js/auth.js"></script>           <script src="js/core.js"></script>           <script src="js/proveedores.js"></script>    <script src="js/usuarios.js"></script>       <script src="js/configuracion.js"></script>  </body>
 </html>
