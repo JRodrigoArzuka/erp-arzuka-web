@@ -3,86 +3,146 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ERP Arzuka - Proveedores Avanzado</title>
+    <title>ERP Arzuka</title>
+    
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <style>
-        body { display: flex; height: 100vh; overflow: hidden; background-color: #f0f2f5; font-family: 'Segoe UI', sans-serif; }
-        
-        /* Sidebar */
-        #sidebar { min-width: 260px; max-width: 260px; background: #212529; color: #fff; display: flex; flex-direction: column; }
-        #sidebar .logo { padding: 20px; background: #0d6efd; text-align: center; font-weight: bold; font-size: 1.2rem; }
-        #sidebar ul { list-style: none; padding: 0; margin-top: 20px; }
-        #sidebar ul li a { padding: 15px 25px; display: block; color: #adb5bd; text-decoration: none; border-left: 4px solid transparent; cursor: pointer; transition: 0.3s; }
-        #sidebar ul li a:hover, #sidebar ul li a.active { background: #343a40; color: #fff; border-left-color: #0d6efd; }
-        
-        /* Content */
-        #content { flex: 1; padding: 20px; overflow-y: auto; }
-        .card-dashboard { background: white; border-radius: 10px; border: none; box-shadow: 0 2px 10px rgba(0,0,0,0.05); padding: 20px; margin-bottom: 20px; }
-        
-        /* Estilos Específicos de Sucursales (Tu diseño original adaptado) */
-        .sucursal-bloque {
-            border: 1px solid #dee2e6;
-            border-left: 4px solid #0d6efd;
-            padding: 20px;
-            margin-bottom: 20px;
-            border-radius: 8px;
-            background-color: #f8f9fa;
-            position: relative;
-        }
-        .form-section-title {
-            color: #0d6efd;
-            font-weight: bold;
-            border-bottom: 2px solid #0d6efd;
-            padding-bottom: 5px;
-            margin-top: 20px;
-            margin-bottom: 15px;
-        }
-    </style>
+    
+    <link rel="stylesheet" href="css/estilos.css">
 </head>
 <body>
 
+    <div id="overlay" onclick="toggleSidebar(false)"></div>
+
     <nav id="sidebar">
-        <div class="logo"><i class="bi bi-box-seam"></i> ERP ARZUKA</div>
+        <div class="logo" id="lblLogoText">
+            <i class="bi bi-box-seam-fill"></i> ERP ARZUKA
+        </div>
         <ul>
-            <li><a class="active"><i class="bi bi-people-fill me-2"></i> Proveedores</a></li>
-            </ul>
+            <li>
+                <a onclick="nav('inicio')" id="link-inicio" class="active">
+                    <i class="bi bi-speedometer2"></i> Inicio
+                </a>
+            </li>
+            <li>
+                <a onclick="nav('proveedores')" id="link-proveedores">
+                    <i class="bi bi-people-fill"></i> Proveedores
+                </a>
+            </li>
+            <li>
+                <a onclick="nav('usuarios')" id="link-usuarios">
+                    <i class="bi bi-person-badge-fill"></i> Usuarios
+                </a>
+            </li>
+            <li>
+                <a onclick="nav('configuracion')" id="link-configuracion">
+                    <i class="bi bi-gear-fill"></i> Configuración
+                </a>
+            </li>
+        </ul>
     </nav>
 
     <div id="content">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2>Gestión de Proveedores</h2>
-            <div>
-                <button class="btn btn-outline-secondary me-2" onclick="cargarDatosGlobales()">🔄 Refrescar</button>
-                <button class="btn btn-primary" onclick="abrirModalNuevo()">+ Nuevo Proveedor</button>
-            </div>
+        
+        <div class="top-bar">
+            <span class="fw-bold text-primary"><i class="bi bi-box-seam-fill"></i> ERP</span>
+            <button class="btn btn-light border" onclick="toggleSidebar()">
+                <i class="bi bi-list h4 m-0"></i>
+            </button>
         </div>
 
-        <div class="card-dashboard p-0 overflow-hidden">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th>Razón Social / Comercial</th>
-                        <th>Identificación</th>
-                        <th>Teléfono</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody id="tablaBody">
-                    <tr><td colspan="4" class="text-center py-5 text-muted">Cargando datos...</td></tr>
-                </tbody>
-            </table>
+        <div id="main-area">
+            
+            <div id="view-inicio" class="view-section active">
+                <h2 class="mb-4">Panel de Control</h2>
+                <div class="row g-3">
+                    <div class="col-12 col-md-4">
+                        <div class="card-dashboard text-center h-100">
+                            <h1 class="text-primary"><i class="bi bi-people"></i></h1>
+                            <h5>Proveedores</h5>
+                            <p class="text-muted small">Gestión de socios y sucursales</p>
+                            <button class="btn btn-outline-primary w-100" onclick="nav('proveedores')">Ir al módulo</button>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <div class="card-dashboard text-center h-100">
+                            <h1 class="text-success"><i class="bi bi-cart"></i></h1>
+                            <h5>Compras</h5>
+                            <p class="text-muted small">Registro de gastos</p>
+                            <button class="btn btn-outline-success w-100" disabled>Próximamente</button>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <div class="card-dashboard text-center h-100">
+                            <h1 class="text-warning"><i class="bi bi-person-badge"></i></h1>
+                            <h5>Usuarios</h5>
+                            <p class="text-muted small">Control de acceso</p>
+                            <button class="btn btn-outline-warning w-100" onclick="nav('usuarios')">Gestionar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-proveedores" class="view-section">
+                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                    <h2>Gestión de Proveedores</h2>
+                    <div>
+                        <button class="btn btn-outline-secondary me-2" onclick="cargarProveedores()">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </button>
+                        <button class="btn btn-primary" onclick="abrirModalNuevoProveedor()">
+                            <i class="bi bi-plus-lg"></i> Nuevo
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card-dashboard p-0 overflow-hidden">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Empresa</th>
+                                    <th>Identificación</th>
+                                    <th>Teléfono</th>
+                                    <th>Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cuerpoTablaProv">
+                                <tr><td colspan="4" class="text-center py-5 text-muted">Esperando datos...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-usuarios" class="view-section">
+                <h2>Gestión de Usuarios</h2>
+                <div class="alert alert-info">Módulo en construcción. Aquí irá la tabla de usuarios.</div>
+            </div>
+
+            <div id="view-configuracion" class="view-section">
+                <h2>Configuración del Sistema</h2>
+                <div class="card-dashboard mt-3">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Nombre del ERP</label>
+                        <input type="text" class="form-control" id="txtConfigNombreERP" placeholder="Cargando...">
+                    </div>
+                    <button class="btn btn-success" disabled>Guardar Cambios (Pronto)</button>
+                </div>
+            </div>
+
         </div>
     </div>
 
-    <div class="modal fade" id="modalFormulario" tabindex="-1" data-bs-backdrop="static">
-        <div class="modal-dialog modal-xl"> <div class="modal-content">
+    <div class="modal fade" id="modalFormularioProveedor" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
                 <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title" id="modalTitulo">Registrar Proveedor</h5>
+                    <h5 class="modal-title" id="modalTituloProveedor">Registrar Proveedor</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <form id="formPrincipal">
+                    <form id="formProveedor">
                         <input type="hidden" id="ID_Proveedor">
                         
                         <div class="form-section-title">Datos Principales</div>
@@ -116,7 +176,7 @@
                             </div>
                         </div>
 
-                        <div class="form-section-title">Información Financiera</div>
+                        <div class="form-section-title mt-4">Información Financiera</div>
                         <div class="row g-3 align-items-center">
                             <div class="col-md-2">
                                 <div class="form-check form-switch">
@@ -130,11 +190,11 @@
                             </div>
                             <div class="col-md-8">
                                 <label class="form-label">Métodos de Pago</label>
-                                <div id="divFormasPago" class="d-flex flex-wrap gap-3">
+                                <div id="divFormasPago" class="d-flex flex-wrap gap-3 border rounded p-2 bg-light">
                                     </div>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">N° Cuenta</label>
+                                <label class="form-label">N° Cuenta Bancaria</label>
                                 <input type="text" class="form-control" id="nroCuenta">
                             </div>
                             <div class="col-md-6">
@@ -143,7 +203,7 @@
                             </div>
                         </div>
 
-                        <div class="form-section-title d-flex justify-content-between align-items-center">
+                        <div class="form-section-title d-flex justify-content-between align-items-center mt-4">
                             <span>Sucursales</span>
                             <div class="input-group" style="width: 200px;">
                                 <span class="input-group-text">Cantidad</span>
@@ -151,14 +211,14 @@
                             </div>
                         </div>
                         
-                        <div id="contenedorSucursales">
+                        <div id="contenedorSucursales" class="mt-2">
                             </div>
 
                     </form>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary" onclick="guardarTodo()">💾 Guardar Proveedor</button>
+                    <button type="button" class="btn btn-primary" onclick="guardarProveedorCompleto()">💾 Guardar Proveedor</button>
                 </div>
             </div>
         </div>
@@ -168,339 +228,6 @@
     <datalist id="listaGlobalUrbanizaciones"></datalist>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-    <script>
-        // ⬇️⬇️⬇️ PEGA TU URL AQUÍ ⬇️⬇️⬇️
-        const URL_API = "https://script.google.com/macros/s/AKfycbzsojfQne5eh9V4iWCUzpcE9tlxSUL9pHMkcqWpHb0rPURDWVjCwEwH5MpdWppuE1R2/exec";
-        
-        // Variable global para guardar los datos que vienen de Google (Listas, Proveedores, etc.)
-        let globalData = {
-            listas: {},
-            proveedores: [],
-            sucursales: []
-        };
-
-        // --- AL INICIAR ---
-        window.onload = cargarDatosGlobales;
-
-        async function cargarDatosGlobales() {
-            const tbody = document.getElementById('tablaBody');
-            tbody.innerHTML = '<tr><td colspan="4" class="text-center py-5"><span class="spinner-border text-primary"></span> Cargando datos maestros...</td></tr>';
-
-            try {
-                const respuesta = await fetch(URL_API, {
-                    method: "POST",
-                    body: JSON.stringify({ accion: "obtenerDatosCompletos" })
-                });
-                const datos = await respuesta.json();
-
-                if (datos.success) {
-                    globalData = datos;
-                    renderTablaProveedores();
-                    prepararListasAuxiliares();
-                } else {
-                    alert("Error al cargar datos: " + datos.error);
-                }
-            } catch (e) {
-                console.error(e);
-                tbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Error de conexión.</td></tr>`;
-            }
-        }
-
-        // --- RENDERIZADO DE TABLA ---
-        function renderTablaProveedores() {
-            const tbody = document.getElementById('tablaBody');
-            tbody.innerHTML = '';
-
-            if (globalData.proveedores.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No hay proveedores registrados.</td></tr>';
-                return;
-            }
-
-            globalData.proveedores.forEach(p => {
-                tbody.innerHTML += `
-                    <tr>
-                        <td>
-                            <strong>${p.Nombre_Comercial}</strong><br>
-                            <small class="text-muted">${p.Razon_Social}</small>
-                        </td>
-                        <td>
-                            <span class="badge bg-light text-dark border">${p.Tipo_Proveedor}</span><br>
-                            ${p.RUC || p.DNI || '-'}
-                        </td>
-                        <td>${p.Telefono_Principal || '-'}</td>
-                        <td>
-                            <button class="btn btn-sm btn-outline-primary" onclick="editarProveedor('${p.ID_Proveedor}')">
-                                <i class="bi bi-pencil-square"></i> Editar
-                            </button>
-                        </td>
-                    </tr>`;
-            });
-        }
-
-        // --- PREPARACIÓN DE FORMULARIO (Listas y Checks) ---
-        function prepararListasAuxiliares() {
-            // 1. Checkboxes de Pagos
-            const divPagos = document.getElementById("divFormasPago");
-            divPagos.innerHTML = '';
-            if (globalData.listas["Forma de Pago"]) {
-                globalData.listas["Forma de Pago"].forEach(item => {
-                    divPagos.innerHTML += `
-                        <div class="form-check">
-                            <input class="form-check-input check-pago" type="checkbox" value="${item.valor}" id="pago_${item.valor}">
-                            <label class="form-check-label" for="pago_${item.valor}">${item.valor}</label>
-                        </div>`;
-                });
-            }
-
-            // 2. Datalists para autocompletar Zonas y Urb
-            llenarDatalist('listaGlobalZonas', 'Zona');
-            llenarDatalist('listaGlobalUrbanizaciones', 'Urbanizacion');
-        }
-
-        function llenarDatalist(idLista, tipoLista) {
-            const dl = document.getElementById(idLista);
-            dl.innerHTML = '';
-            if (globalData.listas[tipoLista]) {
-                globalData.listas[tipoLista].forEach(item => {
-                    dl.innerHTML += `<option value="${item.valor}"></option>`;
-                });
-            }
-        }
-
-        // --- LÓGICA DE INTERFAZ DEL FORMULARIO ---
-        function abrirModalNuevo() {
-            document.getElementById('formPrincipal').reset();
-            document.getElementById('ID_Proveedor').value = "";
-            document.getElementById('modalTitulo').innerText = "Nuevo Proveedor";
-            document.getElementById('numSucursales').value = 1;
-            renderSucursales();
-            new bootstrap.Modal(document.getElementById('modalFormulario')).show();
-        }
-
-        function toggleDocumento() {
-            const tipo = document.getElementById('tipoProveedor').value;
-            const lbl = document.getElementById('lblDoc');
-            lbl.innerText = (tipo === 'Formal') ? 'RUC' : 'DNI';
-        }
-
-        // --- LÓGICA COMPLEJA: SUCURSALES DINÁMICAS ---
-        function renderSucursales() {
-            const num = parseInt(document.getElementById("numSucursales").value) || 0;
-            const contenedor = document.getElementById("contenedorSucursales");
-            const actuales = contenedor.children.length;
-
-            // Agregar
-            if (num > actuales) {
-                for (let i = actuales + 1; i <= num; i++) {
-                    contenedor.insertAdjacentHTML('beforeend', htmlSucursal(i));
-                    cargarDepartamentos(i); // Llenar el primer select
-                }
-            } 
-            // Quitar
-            else if (num < actuales) {
-                for (let i = actuales; i > num; i--) {
-                    contenedor.lastElementChild.remove();
-                }
-            }
-        }
-
-        function htmlSucursal(i) {
-            return `
-            <div class="sucursal-bloque" id="sucursal_${i}">
-                <h6 class="text-primary mb-3"><i class="bi bi-shop"></i> Sucursal #${i}</h6>
-                <div class="row g-2">
-                    <div class="col-md-6"><input type="text" class="form-control form-control-sm suc-contacto" placeholder="Contacto"></div>
-                    <div class="col-md-6"><input type="text" class="form-control form-control-sm suc-telefono" placeholder="Teléfono Sucursal"></div>
-                    <div class="col-md-8"><input type="text" class="form-control form-control-sm suc-direccion" placeholder="Dirección Exacta"></div>
-                    <div class="col-md-4"><input type="text" class="form-control form-control-sm suc-zona" list="listaGlobalZonas" placeholder="Zona"></div>
-                    
-                    <div class="col-md-3">
-                        <select class="form-select form-select-sm suc-depto" id="depto_${i}" onchange="cargarProvincias(${i})"></select>
-                    </div>
-                    <div class="col-md-3">
-                        <select class="form-select form-select-sm suc-prov" id="prov_${i}" onchange="cargarCiudades(${i})" disabled></select>
-                    </div>
-                    <div class="col-md-3">
-                        <select class="form-select form-select-sm suc-dist" id="dist_${i}" disabled></select>
-                    </div>
-                    <div class="col-md-3">
-                        <input type="text" class="form-control form-control-sm suc-urb" list="listaGlobalUrbanizaciones" placeholder="Urbanización">
-                    </div>
-                </div>
-            </div>`;
-        }
-
-        // --- CASCADA DE COMBOS (Dropdowns) ---
-        function cargarDepartamentos(i) {
-            const sel = document.getElementById(`depto_${i}`);
-            sel.innerHTML = '<option value="">Dpto...</option>';
-            if(globalData.listas["Departamento"]) {
-                globalData.listas["Departamento"].forEach(d => {
-                    sel.innerHTML += `<option value="${d.valor}">${d.valor}</option>`;
-                });
-            }
-        }
-
-        function cargarProvincias(i) {
-            const depto = document.getElementById(`depto_${i}`).value;
-            const selProv = document.getElementById(`prov_${i}`);
-            selProv.innerHTML = '<option value="">Prov...</option>';
-            selProv.disabled = true;
-            document.getElementById(`dist_${i}`).disabled = true;
-
-            if(depto && globalData.listas["Provincia"]) {
-                const filtrados = globalData.listas["Provincia"].filter(x => x.agrupador === depto);
-                filtrados.forEach(p => {
-                    selProv.innerHTML += `<option value="${p.valor}">${p.valor}</option>`;
-                });
-                selProv.disabled = false;
-            }
-        }
-
-        function cargarCiudades(i) {
-            const prov = document.getElementById(`prov_${i}`).value;
-            const selDist = document.getElementById(`dist_${i}`);
-            selDist.innerHTML = '<option value="">Dist...</option>';
-            selDist.disabled = true;
-
-            if(prov && globalData.listas["Ciudad"]) {
-                const filtrados = globalData.listas["Ciudad"].filter(x => x.agrupador === prov);
-                filtrados.forEach(c => {
-                    selDist.innerHTML += `<option value="${c.valor}">${c.valor}</option>`;
-                });
-                selDist.disabled = false;
-            }
-        }
-
-        // --- GUARDADO FINAL ---
-        async function guardarTodo() {
-            const btn = document.querySelector('.modal-footer .btn-primary');
-            const originalText = btn.innerText;
-            btn.disabled = true; btn.innerText = "Guardando...";
-
-            // 1. Construir Objeto Datos Principales
-            const tipo = document.getElementById('tipoProveedor').value;
-            const rucVal = document.getElementById('txtDocumento').value;
-            
-            const pagos = [];
-            document.querySelectorAll('.check-pago:checked').forEach(ch => pagos.push(ch.value));
-
-            const datosPrincipales = {
-                ID_Proveedor: document.getElementById("ID_Proveedor").value,
-                Tipo_Proveedor: tipo,
-                RUC: (tipo === 'Formal') ? rucVal : "",
-                DNI: (tipo === 'Informal') ? rucVal : "",
-                Razon_Social: document.getElementById('razonSocial').value,
-                Nombre_Comercial: document.getElementById('nombreComercial').value,
-                Domicilio_Fiscal: document.getElementById('domicilioFiscal').value,
-                Telefono_Principal: document.getElementById('telefonoPrincipal').value,
-                Acepta_Credito: document.getElementById('aceptaCredito').checked,
-                Dias_Credito: document.getElementById('diasCredito').value,
-                Metodos_Pago: pagos.join(', '),
-                Nro_Cuenta: document.getElementById('nroCuenta').value,
-                Nro_Yape_Plin: document.getElementById('nroYapePlin').value
-            };
-
-            // 2. Construir Array de Sucursales
-            const sucursales = [];
-            document.querySelectorAll('.sucursal-bloque').forEach((bloque, index) => {
-                const i = index + 1; // El ID del bloque no siempre es secuencial si se borran, pero usaremos el DOM
-                sucursales.push({
-                    Contacto_Sucursal: bloque.querySelector('.suc-contacto').value,
-                    Telefono_Sucursal: bloque.querySelector('.suc-telefono').value,
-                    Direccion: bloque.querySelector('.suc-direccion').value,
-                    Zona: bloque.querySelector('.suc-zona').value,
-                    Departamento: bloque.querySelector('.suc-depto').value,
-                    Provincia: bloque.querySelector('.suc-prov').value,
-                    Ciudad: bloque.querySelector('.suc-dist').value, // En tu excel se llama Ciudad
-                    Urbanizacion: bloque.querySelector('.suc-urb').value
-                });
-            });
-
-            const payload = { datosPrincipales, sucursales };
-
-            try {
-                const respuesta = await fetch(URL_API, {
-                    method: "POST",
-                    body: JSON.stringify({ 
-                        accion: "guardarProveedorCompleto", 
-                        payload: payload 
-                    })
-                });
-                const datos = await respuesta.json();
-
-                if (datos.success) {
-                    alert("✅ Guardado correctamente");
-                    bootstrap.Modal.getInstance(document.getElementById('modalFormulario')).hide();
-                    cargarDatosGlobales(); // Recargar tabla
-                } else {
-                    alert("❌ Error: " + datos.error);
-                }
-            } catch (e) {
-                alert("Error de red: " + e.message);
-            } finally {
-                btn.disabled = false; btn.innerText = originalText;
-            }
-        }
-
-        // --- EDICIÓN ---
-        function editarProveedor(id) {
-            const p = globalData.proveedores.find(x => x.ID_Proveedor === id);
-            if(!p) return;
-
-            // Cargar datos en modal
-            document.getElementById('ID_Proveedor').value = p.ID_Proveedor;
-            document.getElementById('tipoProveedor').value = p.Tipo_Proveedor;
-            toggleDocumento();
-            document.getElementById('txtDocumento').value = (p.Tipo_Proveedor === 'Formal') ? p.RUC : p.DNI;
-            document.getElementById('razonSocial').value = p.Razon_Social;
-            document.getElementById('nombreComercial').value = p.Nombre_Comercial;
-            document.getElementById('domicilioFiscal').value = p.Domicilio_Fiscal;
-            document.getElementById('telefonoPrincipal').value = p.Telefono_Principal;
-            document.getElementById('aceptaCredito').checked = p.Acepta_Credito;
-            document.getElementById('diasCredito').value = p.Dias_Credito;
-            document.getElementById('nroCuenta').value = p.Nro_Cuenta;
-            document.getElementById('nroYapePlin').value = p.Nro_Yape_Plin;
-
-            // Checks de pago
-            const pagos = (p.Metodos_Pago || "").split(', ');
-            document.querySelectorAll('.check-pago').forEach(ch => {
-                ch.checked = pagos.includes(ch.value);
-            });
-
-            // Cargar Sucursales
-            const susSucursales = globalData.sucursales.filter(s => s.ID_Proveedor === id);
-            document.getElementById('numSucursales').value = susSucursales.length;
-            
-            // Limpiar y regenerar
-            document.getElementById("contenedorSucursales").innerHTML = "";
-            susSucursales.forEach((suc, index) => {
-                const i = index + 1;
-                document.getElementById("contenedorSucursales").insertAdjacentHTML('beforeend', htmlSucursal(i));
-                
-                // Llenar selects y valores (con un pequeño delay para que el DOM exista)
-                setTimeout(() => {
-                    cargarDepartamentos(i);
-                    const bloque = document.getElementById(`sucursal_${i}`);
-                    bloque.querySelector('.suc-contacto').value = suc.Contacto_Sucursal;
-                    bloque.querySelector('.suc-telefono').value = suc.Telefono_Sucursal;
-                    bloque.querySelector('.suc-direccion').value = suc.Direccion;
-                    bloque.querySelector('.suc-zona').value = suc.Zona;
-                    bloque.querySelector('.suc-urb').value = suc.Urbanizacion;
-                    
-                    // Cascada manual
-                    document.getElementById(`depto_${i}`).value = suc.Departamento;
-                    cargarProvincias(i);
-                    document.getElementById(`prov_${i}`).value = suc.Provincia;
-                    cargarCiudades(i);
-                    document.getElementById(`dist_${i}`).value = suc.Ciudad;
-                }, 50);
-            });
-
-            document.getElementById('modalTitulo').innerText = "Editar Proveedor: " + p.Nombre_Comercial;
-            new bootstrap.Modal(document.getElementById('modalFormulario')).show();
-        }
-    </script>
-</body>
+    
+    <script src="js/core.js"></script>         <script src="js/proveedores.js"></script>  <script src="js/usuarios.js"></script>     <script src="js/configuracion.js"></script> </body>
 </html>
