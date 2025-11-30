@@ -1,6 +1,7 @@
 /**
  * js/core.js
- * Núcleo de la aplicación: Manejo de API y Estado.
+ * Núcleo de la aplicación: Manejo de Estado y Navegación.
+ * NO CONTIENE callAPI - usa la función centralizada de config.js
  */
 
 // Estado global de la aplicación
@@ -8,54 +9,14 @@ let globalData = {
     listas: {},
     proveedores: [],
     sucursales: [],
-    usuarios: []
+    usuarios: [],
+    // Cache para optimizar peticiones repetidas
+    cache: {
+        proveedores: null,
+        usuarios: null,
+        timestamp: null
+    }
 };
-
-// --- FUNCIÓN CENTRAL DE API ---
-// Esta función decide automáticamente qué URL usar basándose en el "servicio"
-async function callAPI(servicio, accion, payload = {}) {
-    let urlDestino = "";
-
-    // 1. Router de URLs (Selecciona el script correcto)
-    if (servicio === 'proveedores') {
-        // Usa la URL del script antiguo (Gestión de proveedores)
-        if (typeof Config !== 'undefined' && Config.URL_PROVEEDORES) {
-            urlDestino = Config.URL_PROVEEDORES;
-        } else {
-            // Fallback por si no existe config.js (NO RECOMENDADO, pero previene errores)
-            urlDestino = "https://script.google.com/macros/s/AKfycbzsojfQne5eh9V4iWCUzpcE9tlxSUL9pHMkcqWpHb0rPURDWVjCwEwH5MpdWppuE1R2/exec";
-        }
-    } 
-    else if (servicio === 'usuarios') {
-        // Usa la URL del script nuevo (Gestión de usuarios y login)
-        if (typeof Config !== 'undefined' && Config.URL_USUARIOS) {
-            urlDestino = Config.URL_USUARIOS;
-        } else {
-            // Fallback
-            urlDestino = "https://script.google.com/macros/s/AKfycbzzIyzLjeUbWW6W1_Dx4SV0-F8V_HxjgKkLARF__XI_eI5nbya59Y3LnrasoEN97OR8RA/exec";
-        }
-    }
-    else {
-        alert("Error de programación: Servicio desconocido (" + servicio + ")");
-        return { success: false, error: "Servicio desconocido" };
-    }
-
-    // 2. Ejecución de la petición
-    try {
-        const respuesta = await fetch(urlDestino, {
-            method: "POST",
-            body: JSON.stringify({ 
-                accion: accion, 
-                payload: payload 
-            })
-        });
-        return await respuesta.json();
-
-    } catch (e) {
-        console.error("Error API:", e);
-        return { success: false, error: "Error de conexión: " + e.message };
-    }
-}
 
 // --- NAVEGACIÓN ---
 function nav(vista) {
@@ -67,10 +28,6 @@ function nav(vista) {
     const vistaEl = document.getElementById('view-' + vista);
     if(vistaEl) vistaEl.classList.add('active');
     
-    // Activar link
-    const linkEl = document.getElementById('link-' + vista);
-    if(linkEl) linkEl.classList.add('active');
-
     // En móvil, cerrar el menú al hacer clic
     toggleSidebar(false);
 
@@ -80,16 +37,16 @@ function nav(vista) {
     }
     
     if(vista === 'usuarios') {
-        // Esta función está en js/usuarios.js
         if(typeof cargarUsuarios === 'function') cargarUsuarios();
     }
+
+    // Scroll al inicio para mejor UX
+    window.scrollTo(0, 0);
 }
 
 // --- UTILIDADES UI ---
 function toggleSidebar(forceState = null) {
     const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('login-overlay'); // Reutilizamos el z-index o creamos uno nuevo
-    // Nota: En index.html hay un div id="overlay" específico para el menú móvil
     const menuOverlay = document.getElementById('overlay'); 
     
     if (forceState === false) {
@@ -99,4 +56,23 @@ function toggleSidebar(forceState = null) {
         sidebar.classList.toggle('active');
         if(menuOverlay) menuOverlay.classList.toggle('active');
     }
+}
+
+/**
+ * Utilidad para mostrar notificaciones toast (puede ser extendida)
+ */
+function mostrarNotificacion(mensaje, tipo = 'info') {
+    console.log(`[${tipo.toUpperCase()}] ${mensaje}`);
+    // Aquí podrías integrar Toast de Bootstrap en el futuro
+}
+
+/**
+ * Limpiar cache cuando sea necesario (ej: después de guardar cambios)
+ */
+function limpiarCache() {
+    globalData.cache = {
+        proveedores: null,
+        usuarios: null,
+        timestamp: null
+    };
 }
