@@ -3,284 +3,503 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ERP Sistema</title>
+    <title>ERP Arzuka - Proveedores Avanzado</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <style>
         body { display: flex; height: 100vh; overflow: hidden; background-color: #f0f2f5; font-family: 'Segoe UI', sans-serif; }
+        
+        /* Sidebar */
         #sidebar { min-width: 260px; max-width: 260px; background: #212529; color: #fff; display: flex; flex-direction: column; }
         #sidebar .logo { padding: 20px; background: #0d6efd; text-align: center; font-weight: bold; font-size: 1.2rem; }
         #sidebar ul { list-style: none; padding: 0; margin-top: 20px; }
         #sidebar ul li a { padding: 15px 25px; display: block; color: #adb5bd; text-decoration: none; border-left: 4px solid transparent; cursor: pointer; transition: 0.3s; }
         #sidebar ul li a:hover, #sidebar ul li a.active { background: #343a40; color: #fff; border-left-color: #0d6efd; }
-        #sidebar ul li a i { margin-right: 10px; }
+        
+        /* Content */
         #content { flex: 1; padding: 20px; overflow-y: auto; }
-        .view-section { display: none; animation: fadeIn 0.3s; }
-        .view-section.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .card-dashboard { background: white; border-radius: 10px; border: none; box-shadow: 0 2px 10px rgba(0,0,0,0.05); padding: 20px; margin-bottom: 20px; }
+        
+        /* Estilos Específicos de Sucursales (Tu diseño original adaptado) */
+        .sucursal-bloque {
+            border: 1px solid #dee2e6;
+            border-left: 4px solid #0d6efd;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            background-color: #f8f9fa;
+            position: relative;
+        }
+        .form-section-title {
+            color: #0d6efd;
+            font-weight: bold;
+            border-bottom: 2px solid #0d6efd;
+            padding-bottom: 5px;
+            margin-top: 20px;
+            margin-bottom: 15px;
+        }
     </style>
 </head>
 <body>
 
     <nav id="sidebar">
-        <div class="logo" id="lblNombreERP"><i class="bi bi-box-seam"></i> CARGANDO...</div>
+        <div class="logo"><i class="bi bi-box-seam"></i> ERP ARZUKA</div>
         <ul>
-            <li><a onclick="nav('inicio')" id="link-inicio" class="active"><i class="bi bi-speedometer2"></i> Inicio</a></li>
-            <li><a onclick="nav('proveedores')" id="link-proveedores"><i class="bi bi-people-fill"></i> Proveedores</a></li>
-            <li><a onclick="nav('usuarios')" id="link-usuarios"><i class="bi bi-person-badge-fill"></i> Usuarios</a></li>
-            <li><a onclick="nav('configuracion')" id="link-configuracion"><i class="bi bi-gear-fill"></i> Configuración</a></li>
-        </ul>
+            <li><a class="active"><i class="bi bi-people-fill me-2"></i> Proveedores</a></li>
+            </ul>
     </nav>
 
     <div id="content">
-        
-        <div id="view-inicio" class="view-section active">
-            <h2 class="mb-4">Panel de Control</h2>
-            <div class="row">
-                <div class="col-md-4">
-                    <div class="card-dashboard text-center">
-                        <h1 class="text-primary"><i class="bi bi-people"></i></h1>
-                        <h5>Proveedores</h5>
-                        <button class="btn btn-outline-primary btn-sm" onclick="nav('proveedores')">Gestionar</button>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card-dashboard text-center">
-                        <h1 class="text-warning"><i class="bi bi-person-badge"></i></h1>
-                        <h5>Usuarios</h5>
-                        <button class="btn btn-outline-warning btn-sm" onclick="nav('usuarios')">Gestionar Acceso</button>
-                    </div>
-                </div>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Gestión de Proveedores</h2>
+            <div>
+                <button class="btn btn-outline-secondary me-2" onclick="cargarDatosGlobales()">🔄 Refrescar</button>
+                <button class="btn btn-primary" onclick="abrirModalNuevo()">+ Nuevo Proveedor</button>
             </div>
         </div>
 
-        <div id="view-proveedores" class="view-section">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h2>Proveedores</h2>
-                <div>
-                    <button class="btn btn-secondary me-2" onclick="cargarProveedores()">Refrescar</button>
-                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNuevoProv">+ Nuevo</button>
-                </div>
-            </div>
-            <div class="card-dashboard p-0 overflow-hidden">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light"><tr><th>Empresa</th><th>RUC/DNI</th><th>Teléfono</th><th>Dirección</th></tr></thead>
-                    <tbody id="cuerpoTablaProv"><tr><td colspan="4" class="text-center py-4 text-muted">Cargando...</td></tr></tbody>
-                </table>
-            </div>
+        <div class="card-dashboard p-0 overflow-hidden">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Razón Social / Comercial</th>
+                        <th>Identificación</th>
+                        <th>Teléfono</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tablaBody">
+                    <tr><td colspan="4" class="text-center py-5 text-muted">Cargando datos...</td></tr>
+                </tbody>
+            </table>
         </div>
-
-        <div id="view-usuarios" class="view-section">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h2>Usuarios del Sistema</h2>
-                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNuevoUsuario">+ Agregar Usuario</button>
-            </div>
-            <div class="card-dashboard p-0">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light"><tr><th>Nombre</th><th>Correo</th><th>Rol</th><th>Acción</th></tr></thead>
-                    <tbody id="cuerpoTablaUsuarios"><tr><td colspan="4" class="text-center py-4 text-muted">Cargando usuarios...</td></tr></tbody>
-                </table>
-            </div>
-        </div>
-
-        <div id="view-configuracion" class="view-section">
-            <h2>Configuración del Sistema</h2>
-            <div class="card-dashboard mt-3">
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Nombre del ERP (Empresa)</label>
-                    <input type="text" class="form-control" id="txtConfigNombreERP" placeholder="Ej: ERP ARZUKA">
-                    <div class="form-text">Este nombre aparecerá en el menú lateral y reportes.</div>
-                </div>
-                <button class="btn btn-success" onclick="guardarConfiguracion()">💾 Guardar Cambios</button>
-            </div>
-        </div>
-
     </div>
 
-    <div class="modal fade" id="modalNuevoProv" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header bg-primary text-white"><h5 class="modal-title">Nuevo Proveedor</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+    <div class="modal fade" id="modalFormulario" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog modal-xl"> <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="modalTitulo">Registrar Proveedor</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
                 <div class="modal-body">
-                    <form id="formProveedor">
-                        <div class="mb-2"><label>Razón Social</label><input type="text" class="form-control" id="txtRazonSocial"></div>
-                        <div class="mb-2"><label>Nombre Comercial</label><input type="text" class="form-control" id="txtNombreComercial"></div>
-                        <div class="row mb-2">
-                            <div class="col"><label>RUC/DNI</label><input type="number" class="form-control" id="txtRUC"></div>
-                            <div class="col"><label>Teléfono</label><input type="text" class="form-control" id="txtTelefono"></div>
+                    <form id="formPrincipal">
+                        <input type="hidden" id="ID_Proveedor">
+                        
+                        <div class="form-section-title">Datos Principales</div>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Tipo</label>
+                                <select id="tipoProveedor" class="form-select" onchange="toggleDocumento()">
+                                    <option value="Formal">Formal (RUC)</option>
+                                    <option value="Informal">Informal (DNI)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label" id="lblDoc">RUC</label>
+                                <input type="number" class="form-control" id="txtDocumento">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Teléfono Principal</label>
+                                <input type="text" class="form-control" id="telefonoPrincipal">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Razón Social</label>
+                                <input type="text" class="form-control" id="razonSocial">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Nombre Comercial</label>
+                                <input type="text" class="form-control" id="nombreComercial">
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label">Domicilio Fiscal</label>
+                                <input type="text" class="form-control" id="domicilioFiscal">
+                            </div>
                         </div>
-                        <div class="mb-2"><label>Dirección</label><input type="text" class="form-control" id="txtDireccion"></div>
+
+                        <div class="form-section-title">Información Financiera</div>
+                        <div class="row g-3 align-items-center">
+                            <div class="col-md-2">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="aceptaCredito">
+                                    <label class="form-check-label">¿Crédito?</label>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Días Crédito</label>
+                                <input type="number" class="form-control" id="diasCredito" value="0">
+                            </div>
+                            <div class="col-md-8">
+                                <label class="form-label">Métodos de Pago</label>
+                                <div id="divFormasPago" class="d-flex flex-wrap gap-3">
+                                    </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">N° Cuenta</label>
+                                <input type="text" class="form-control" id="nroCuenta">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Yape / Plin</label>
+                                <input type="text" class="form-control" id="nroYapePlin">
+                            </div>
+                        </div>
+
+                        <div class="form-section-title d-flex justify-content-between align-items-center">
+                            <span>Sucursales</span>
+                            <div class="input-group" style="width: 200px;">
+                                <span class="input-group-text">Cantidad</span>
+                                <input type="number" class="form-control" id="numSucursales" value="0" min="0" onchange="renderSucursales()">
+                            </div>
+                        </div>
+                        
+                        <div id="contenedorSucursales">
+                            </div>
+
                     </form>
                 </div>
-                <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-primary" onclick="guardarProveedor()">Guardar</button></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="guardarTodo()">💾 Guardar Proveedor</button>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="modal fade" id="modalNuevoUsuario" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header bg-warning text-dark"><h5 class="modal-title">Nuevo Usuario</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-                <div class="modal-body">
-                    <form id="formUsuario">
-                        <div class="mb-2"><label>Nombre</label><input type="text" class="form-control" id="txtUserNombre"></div>
-                        <div class="mb-2"><label>Correo</label><input type="email" class="form-control" id="txtUserCorreo"></div>
-                        <div class="mb-2"><label>Rol</label>
-                            <select class="form-select" id="txtUserRol">
-                                <option value="Administrador">Administrador</option>
-                                <option value="Vendedor">Vendedor</option>
-                                <option value="Almacenero">Almacenero</option>
-                            </select>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-warning" onclick="guardarUsuario()">Crear Usuario</button></div>
-            </div>
-        </div>
-    </div>
+    <datalist id="listaGlobalZonas"></datalist>
+    <datalist id="listaGlobalUrbanizaciones"></datalist>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        const URL_API = "https://script.google.com/macros/s/AKfycbzsojfQne5eh9V4iWCUzpcE9tlxSUL9pHMkcqWpHb0rPURDWVjCwEwH5MpdWppuE1R2/exec";
 
-        // --- INICIO ---
-        window.onload = function() {
-            cargarConfiguracion(); // Carga el nombre del ERP
-            cargarProveedores();   // Precarga proveedores
+    <script>
+        // ⬇️⬇️⬇️ PEGA TU URL AQUÍ ⬇️⬇️⬇️
+        const URL_API = "PEGAR_TU_URL_AQUI";
+        
+        // Variable global para guardar los datos que vienen de Google (Listas, Proveedores, etc.)
+        let globalData = {
+            listas: {},
+            proveedores: [],
+            sucursales: []
         };
 
-        function nav(vista) {
-            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('#sidebar a').forEach(el => el.classList.remove('active'));
-            document.getElementById('view-' + vista).classList.add('active');
-            document.getElementById('link-' + vista).classList.add('active');
-            
-            if(vista === 'usuarios') cargarUsuarios();
-        }
+        // --- AL INICIAR ---
+        window.onload = cargarDatosGlobales;
 
-        // --- API HELPERS ---
-        async function callAPI(accion, payload = {}) {
+        async function cargarDatosGlobales() {
+            const tbody = document.getElementById('tablaBody');
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center py-5"><span class="spinner-border text-primary"></span> Cargando datos maestros...</td></tr>';
+
             try {
-                const response = await fetch(URL_API, {
+                const respuesta = await fetch(URL_API, {
                     method: "POST",
-                    body: JSON.stringify({ accion, payload })
+                    body: JSON.stringify({ accion: "obtenerDatosCompletos" })
                 });
-                return await response.json();
+                const datos = await respuesta.json();
+
+                if (datos.success) {
+                    globalData = datos;
+                    renderTablaProveedores();
+                    prepararListasAuxiliares();
+                } else {
+                    alert("Error al cargar datos: " + datos.error);
+                }
             } catch (e) {
-                alert("Error de conexión: " + e.message);
-                return { success: false };
+                console.error(e);
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Error de conexión.</td></tr>`;
             }
         }
 
-        // --- CONFIGURACIÓN ---
-        async function cargarConfiguracion() {
-            const datos = await callAPI('obtenerConfiguracion');
-            if(datos.success && datos.config.Nombre_ERP) {
-                document.getElementById('lblNombreERP').innerHTML = `<i class="bi bi-box-seam"></i> ${datos.config.Nombre_ERP}`;
-                document.getElementById('txtConfigNombreERP').value = datos.config.Nombre_ERP;
-                document.title = datos.config.Nombre_ERP + " - Dashboard";
-            } else {
-                document.getElementById('lblNombreERP').innerHTML = `<i class="bi bi-box-seam"></i> MI ERP`;
+        // --- RENDERIZADO DE TABLA ---
+        function renderTablaProveedores() {
+            const tbody = document.getElementById('tablaBody');
+            tbody.innerHTML = '';
+
+            if (globalData.proveedores.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No hay proveedores registrados.</td></tr>';
+                return;
             }
-        }
 
-        async function guardarConfiguracion() {
-            const nombre = document.getElementById('txtConfigNombreERP').value;
-            if(!nombre) return alert("Escribe un nombre");
-            const datos = await callAPI('guardarConfiguracion', { nombreERP: nombre });
-            if(datos.success) {
-                alert("Configuración guardada");
-                cargarConfiguracion();
-            }
-        }
-
-        // --- USUARIOS ---
-        async function cargarUsuarios() {
-            const tbody = document.getElementById('cuerpoTablaUsuarios');
-            tbody.innerHTML = '<tr><td colspan="4" class="text-center">Cargando...</td></tr>';
-            const datos = await callAPI('obtenerUsuarios');
-            
-            if(datos.success) {
-                tbody.innerHTML = '';
-                if(!datos.usuarios.length) tbody.innerHTML = '<tr><td colspan="4" class="text-center">Sin usuarios</td></tr>';
-                datos.usuarios.forEach(u => {
-                    tbody.innerHTML += `
-                        <tr>
-                            <td>${u.nombre}</td>
-                            <td>${u.correo}</td>
-                            <td><span class="badge bg-info text-dark">${u.rol}</span></td>
-                            <td><button class="btn btn-danger btn-sm" onclick="eliminarUsuario(${u.id})"><i class="bi bi-trash"></i></button></td>
-                        </tr>`;
-                });
-            }
-        }
-
-        async function guardarUsuario() {
-            const payload = {
-                nombre: document.getElementById('txtUserNombre').value,
-                correo: document.getElementById('txtUserCorreo').value,
-                rol: document.getElementById('txtUserRol').value
-            };
-            if(!payload.nombre || !payload.correo) return alert("Completa los datos");
-
-            const datos = await callAPI('guardarUsuario', payload);
-            if(datos.success) {
-                bootstrap.Modal.getInstance(document.getElementById('modalNuevoUsuario')).hide();
-                document.getElementById('formUsuario').reset();
-                cargarUsuarios();
-                alert("Usuario creado");
-            }
-        }
-
-        async function eliminarUsuario(id) {
-            if(!confirm("¿Eliminar usuario?")) return;
-            const datos = await callAPI('eliminarUsuario', { id: id });
-            if(datos.success) cargarUsuarios();
-        }
-
-        // --- PROVEEDORES (Lógica existente mejorada) ---
-        async function cargarProveedores() {
-            const tbody = document.getElementById('cuerpoTablaProv');
-            const datos = await callAPI('obtenerProveedores');
-            if(datos.success) {
-                tbody.innerHTML = '';
-                if(!datos.proveedores.length) tbody.innerHTML = '<tr><td colspan="4" class="text-center">Sin datos</td></tr>';
-                datos.proveedores.forEach(p => {
-                    tbody.innerHTML += `<tr>
-                        <td class="fw-bold">${p.Nombre_Comercial || p.Razon_Social}</td>
-                        <td>${p.RUC || p.DNI || '-'}</td>
+            globalData.proveedores.forEach(p => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>
+                            <strong>${p.Nombre_Comercial}</strong><br>
+                            <small class="text-muted">${p.Razon_Social}</small>
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-dark border">${p.Tipo_Proveedor}</span><br>
+                            ${p.RUC || p.DNI || '-'}
+                        </td>
                         <td>${p.Telefono_Principal || '-'}</td>
-                        <td class="small text-muted">${p.Domicilio_Fiscal || '-'}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" onclick="editarProveedor('${p.ID_Proveedor}')">
+                                <i class="bi bi-pencil-square"></i> Editar
+                            </button>
+                        </td>
                     </tr>`;
+            });
+        }
+
+        // --- PREPARACIÓN DE FORMULARIO (Listas y Checks) ---
+        function prepararListasAuxiliares() {
+            // 1. Checkboxes de Pagos
+            const divPagos = document.getElementById("divFormasPago");
+            divPagos.innerHTML = '';
+            if (globalData.listas["Forma de Pago"]) {
+                globalData.listas["Forma de Pago"].forEach(item => {
+                    divPagos.innerHTML += `
+                        <div class="form-check">
+                            <input class="form-check-input check-pago" type="checkbox" value="${item.valor}" id="pago_${item.valor}">
+                            <label class="form-check-label" for="pago_${item.valor}">${item.valor}</label>
+                        </div>`;
+                });
+            }
+
+            // 2. Datalists para autocompletar Zonas y Urb
+            llenarDatalist('listaGlobalZonas', 'Zona');
+            llenarDatalist('listaGlobalUrbanizaciones', 'Urbanizacion');
+        }
+
+        function llenarDatalist(idLista, tipoLista) {
+            const dl = document.getElementById(idLista);
+            dl.innerHTML = '';
+            if (globalData.listas[tipoLista]) {
+                globalData.listas[tipoLista].forEach(item => {
+                    dl.innerHTML += `<option value="${item.valor}"></option>`;
                 });
             }
         }
 
-        async function guardarProveedor() {
-            const payload = {
-                datosPrincipales: {
-                    ID_Proveedor: "",
-                    Razon_Social: document.getElementById('txtRazonSocial').value,
-                    Nombre_Comercial: document.getElementById('txtNombreComercial').value,
-                    RUC: document.getElementById('txtRUC').value,
-                    DNI: "",
-                    Telefono_Principal: document.getElementById('txtTelefono').value,
-                    Domicilio_Fiscal: document.getElementById('txtDireccion').value,
-                    Tipo_Proveedor: "Formal", Acepta_Credito: false, Dias_Credito: 0, Metodos_Pago: "", Nro_Cuenta: "", Nro_Yape_Plin: ""
-                }, sucursales: []
-            };
-            if (!payload.datosPrincipales.Razon_Social) return alert("Nombre obligatorio");
+        // --- LÓGICA DE INTERFAZ DEL FORMULARIO ---
+        function abrirModalNuevo() {
+            document.getElementById('formPrincipal').reset();
+            document.getElementById('ID_Proveedor').value = "";
+            document.getElementById('modalTitulo').innerText = "Nuevo Proveedor";
+            document.getElementById('numSucursales').value = 1;
+            renderSucursales();
+            new bootstrap.Modal(document.getElementById('modalFormulario')).show();
+        }
 
-            const datos = await callAPI('guardarProveedor', payload);
-            if(datos.success) {
-                bootstrap.Modal.getInstance(document.getElementById('modalNuevoProv')).hide();
-                document.getElementById('formProveedor').reset();
-                cargarProveedores();
-                alert("Proveedor guardado");
-            } else {
-                alert("Error: " + datos.error);
+        function toggleDocumento() {
+            const tipo = document.getElementById('tipoProveedor').value;
+            const lbl = document.getElementById('lblDoc');
+            lbl.innerText = (tipo === 'Formal') ? 'RUC' : 'DNI';
+        }
+
+        // --- LÓGICA COMPLEJA: SUCURSALES DINÁMICAS ---
+        function renderSucursales() {
+            const num = parseInt(document.getElementById("numSucursales").value) || 0;
+            const contenedor = document.getElementById("contenedorSucursales");
+            const actuales = contenedor.children.length;
+
+            // Agregar
+            if (num > actuales) {
+                for (let i = actuales + 1; i <= num; i++) {
+                    contenedor.insertAdjacentHTML('beforeend', htmlSucursal(i));
+                    cargarDepartamentos(i); // Llenar el primer select
+                }
+            } 
+            // Quitar
+            else if (num < actuales) {
+                for (let i = actuales; i > num; i--) {
+                    contenedor.lastElementChild.remove();
+                }
             }
+        }
+
+        function htmlSucursal(i) {
+            return `
+            <div class="sucursal-bloque" id="sucursal_${i}">
+                <h6 class="text-primary mb-3"><i class="bi bi-shop"></i> Sucursal #${i}</h6>
+                <div class="row g-2">
+                    <div class="col-md-6"><input type="text" class="form-control form-control-sm suc-contacto" placeholder="Contacto"></div>
+                    <div class="col-md-6"><input type="text" class="form-control form-control-sm suc-telefono" placeholder="Teléfono Sucursal"></div>
+                    <div class="col-md-8"><input type="text" class="form-control form-control-sm suc-direccion" placeholder="Dirección Exacta"></div>
+                    <div class="col-md-4"><input type="text" class="form-control form-control-sm suc-zona" list="listaGlobalZonas" placeholder="Zona"></div>
+                    
+                    <div class="col-md-3">
+                        <select class="form-select form-select-sm suc-depto" id="depto_${i}" onchange="cargarProvincias(${i})"></select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select form-select-sm suc-prov" id="prov_${i}" onchange="cargarCiudades(${i})" disabled></select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select form-select-sm suc-dist" id="dist_${i}" disabled></select>
+                    </div>
+                    <div class="col-md-3">
+                        <input type="text" class="form-control form-control-sm suc-urb" list="listaGlobalUrbanizaciones" placeholder="Urbanización">
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        // --- CASCADA DE COMBOS (Dropdowns) ---
+        function cargarDepartamentos(i) {
+            const sel = document.getElementById(`depto_${i}`);
+            sel.innerHTML = '<option value="">Dpto...</option>';
+            if(globalData.listas["Departamento"]) {
+                globalData.listas["Departamento"].forEach(d => {
+                    sel.innerHTML += `<option value="${d.valor}">${d.valor}</option>`;
+                });
+            }
+        }
+
+        function cargarProvincias(i) {
+            const depto = document.getElementById(`depto_${i}`).value;
+            const selProv = document.getElementById(`prov_${i}`);
+            selProv.innerHTML = '<option value="">Prov...</option>';
+            selProv.disabled = true;
+            document.getElementById(`dist_${i}`).disabled = true;
+
+            if(depto && globalData.listas["Provincia"]) {
+                const filtrados = globalData.listas["Provincia"].filter(x => x.agrupador === depto);
+                filtrados.forEach(p => {
+                    selProv.innerHTML += `<option value="${p.valor}">${p.valor}</option>`;
+                });
+                selProv.disabled = false;
+            }
+        }
+
+        function cargarCiudades(i) {
+            const prov = document.getElementById(`prov_${i}`).value;
+            const selDist = document.getElementById(`dist_${i}`);
+            selDist.innerHTML = '<option value="">Dist...</option>';
+            selDist.disabled = true;
+
+            if(prov && globalData.listas["Ciudad"]) {
+                const filtrados = globalData.listas["Ciudad"].filter(x => x.agrupador === prov);
+                filtrados.forEach(c => {
+                    selDist.innerHTML += `<option value="${c.valor}">${c.valor}</option>`;
+                });
+                selDist.disabled = false;
+            }
+        }
+
+        // --- GUARDADO FINAL ---
+        async function guardarTodo() {
+            const btn = document.querySelector('.modal-footer .btn-primary');
+            const originalText = btn.innerText;
+            btn.disabled = true; btn.innerText = "Guardando...";
+
+            // 1. Construir Objeto Datos Principales
+            const tipo = document.getElementById('tipoProveedor').value;
+            const rucVal = document.getElementById('txtDocumento').value;
+            
+            const pagos = [];
+            document.querySelectorAll('.check-pago:checked').forEach(ch => pagos.push(ch.value));
+
+            const datosPrincipales = {
+                ID_Proveedor: document.getElementById("ID_Proveedor").value,
+                Tipo_Proveedor: tipo,
+                RUC: (tipo === 'Formal') ? rucVal : "",
+                DNI: (tipo === 'Informal') ? rucVal : "",
+                Razon_Social: document.getElementById('razonSocial').value,
+                Nombre_Comercial: document.getElementById('nombreComercial').value,
+                Domicilio_Fiscal: document.getElementById('domicilioFiscal').value,
+                Telefono_Principal: document.getElementById('telefonoPrincipal').value,
+                Acepta_Credito: document.getElementById('aceptaCredito').checked,
+                Dias_Credito: document.getElementById('diasCredito').value,
+                Metodos_Pago: pagos.join(', '),
+                Nro_Cuenta: document.getElementById('nroCuenta').value,
+                Nro_Yape_Plin: document.getElementById('nroYapePlin').value
+            };
+
+            // 2. Construir Array de Sucursales
+            const sucursales = [];
+            document.querySelectorAll('.sucursal-bloque').forEach((bloque, index) => {
+                const i = index + 1; // El ID del bloque no siempre es secuencial si se borran, pero usaremos el DOM
+                sucursales.push({
+                    Contacto_Sucursal: bloque.querySelector('.suc-contacto').value,
+                    Telefono_Sucursal: bloque.querySelector('.suc-telefono').value,
+                    Direccion: bloque.querySelector('.suc-direccion').value,
+                    Zona: bloque.querySelector('.suc-zona').value,
+                    Departamento: bloque.querySelector('.suc-depto').value,
+                    Provincia: bloque.querySelector('.suc-prov').value,
+                    Ciudad: bloque.querySelector('.suc-dist').value, // En tu excel se llama Ciudad
+                    Urbanizacion: bloque.querySelector('.suc-urb').value
+                });
+            });
+
+            const payload = { datosPrincipales, sucursales };
+
+            try {
+                const respuesta = await fetch(URL_API, {
+                    method: "POST",
+                    body: JSON.stringify({ 
+                        accion: "guardarProveedorCompleto", 
+                        payload: payload 
+                    })
+                });
+                const datos = await respuesta.json();
+
+                if (datos.success) {
+                    alert("✅ Guardado correctamente");
+                    bootstrap.Modal.getInstance(document.getElementById('modalFormulario')).hide();
+                    cargarDatosGlobales(); // Recargar tabla
+                } else {
+                    alert("❌ Error: " + datos.error);
+                }
+            } catch (e) {
+                alert("Error de red: " + e.message);
+            } finally {
+                btn.disabled = false; btn.innerText = originalText;
+            }
+        }
+
+        // --- EDICIÓN ---
+        function editarProveedor(id) {
+            const p = globalData.proveedores.find(x => x.ID_Proveedor === id);
+            if(!p) return;
+
+            // Cargar datos en modal
+            document.getElementById('ID_Proveedor').value = p.ID_Proveedor;
+            document.getElementById('tipoProveedor').value = p.Tipo_Proveedor;
+            toggleDocumento();
+            document.getElementById('txtDocumento').value = (p.Tipo_Proveedor === 'Formal') ? p.RUC : p.DNI;
+            document.getElementById('razonSocial').value = p.Razon_Social;
+            document.getElementById('nombreComercial').value = p.Nombre_Comercial;
+            document.getElementById('domicilioFiscal').value = p.Domicilio_Fiscal;
+            document.getElementById('telefonoPrincipal').value = p.Telefono_Principal;
+            document.getElementById('aceptaCredito').checked = p.Acepta_Credito;
+            document.getElementById('diasCredito').value = p.Dias_Credito;
+            document.getElementById('nroCuenta').value = p.Nro_Cuenta;
+            document.getElementById('nroYapePlin').value = p.Nro_Yape_Plin;
+
+            // Checks de pago
+            const pagos = (p.Metodos_Pago || "").split(', ');
+            document.querySelectorAll('.check-pago').forEach(ch => {
+                ch.checked = pagos.includes(ch.value);
+            });
+
+            // Cargar Sucursales
+            const susSucursales = globalData.sucursales.filter(s => s.ID_Proveedor === id);
+            document.getElementById('numSucursales').value = susSucursales.length;
+            
+            // Limpiar y regenerar
+            document.getElementById("contenedorSucursales").innerHTML = "";
+            susSucursales.forEach((suc, index) => {
+                const i = index + 1;
+                document.getElementById("contenedorSucursales").insertAdjacentHTML('beforeend', htmlSucursal(i));
+                
+                // Llenar selects y valores (con un pequeño delay para que el DOM exista)
+                setTimeout(() => {
+                    cargarDepartamentos(i);
+                    const bloque = document.getElementById(`sucursal_${i}`);
+                    bloque.querySelector('.suc-contacto').value = suc.Contacto_Sucursal;
+                    bloque.querySelector('.suc-telefono').value = suc.Telefono_Sucursal;
+                    bloque.querySelector('.suc-direccion').value = suc.Direccion;
+                    bloque.querySelector('.suc-zona').value = suc.Zona;
+                    bloque.querySelector('.suc-urb').value = suc.Urbanizacion;
+                    
+                    // Cascada manual
+                    document.getElementById(`depto_${i}`).value = suc.Departamento;
+                    cargarProvincias(i);
+                    document.getElementById(`prov_${i}`).value = suc.Provincia;
+                    cargarCiudades(i);
+                    document.getElementById(`dist_${i}`).value = suc.Ciudad;
+                }, 50);
+            });
+
+            document.getElementById('modalTitulo').innerText = "Editar Proveedor: " + p.Nombre_Comercial;
+            new bootstrap.Modal(document.getElementById('modalFormulario')).show();
         }
     </script>
 </body>
