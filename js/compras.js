@@ -8,34 +8,25 @@ let itemsCompra = [];
 
 // --- 1. CARGA INICIAL Y APERTURA DEL MODAL ---
 async function abrirModalCompra() {
-    console.log("🔍 INICIANDO DEBUG DE CONEXIÓN...");
+    console.log("🔍 DIAGNÓSTICO INICIAL");
     
-    // 1. Verificar que las URLs están correctas
-    console.log("URL Proveedores:", Config.URL_PROVEEDORES);
-    console.log("URL Usuarios:", Config.URL_USUARIOS);
+    // 1. Probar servicio de usuarios
+    console.log("Testing servicio de usuarios...");
+    const testUsuarios = await callAPI('usuarios', 'testConexion');
+    console.log("Usuarios:", testUsuarios);
     
-    // 2. Test de conexión básico
-    try {
-        console.log("🧪 Testeando conexión con proveedores...");
-        const testResult = await callAPI('proveedores', 'testConexion');
-        console.log("Resultado test:", testResult);
-        
-        if (!testResult.success) {
-            alert("❌ Error de conexión: " + testResult.error);
-            return;
-        }
-    } catch (e) {
-        console.error("❌ Error en test:", e);
-        alert("Error crítico: " + e.message);
+    // 2. Probar servicio de proveedores  
+    console.log("Testing servicio de proveedores...");
+    const testProveedores = await callAPI('proveedores', 'testConexion');
+    console.log("Proveedores:", testProveedores);
+    
+    if (!testProveedores.success) {
+        alert("❌ Servicio de proveedores no disponible: " + testProveedores.error);
         return;
     }
-
-    // ... el resto de tu código original continúa aquí
-    document.getElementById('formCompra').reset();
-    itemsCompra = [];
-    renderTablaItems();
     
-    // ... etc
+    // Continuar con carga normal...
+    // ... resto de tu código
 }
     // Limpiar formulario previo
     document.getElementById('formCompra').reset();
