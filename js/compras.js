@@ -1,178 +1,257 @@
-/**
- * js/compras.js
- * Lógica del módulo de Compras
- */
-
-let itemsCompra = [];
-
-// --- CARGA INICIAL ---
-async function abrirModalCompra() {
-    // Limpiar formulario previo
-    document.getElementById('formCompra').reset();
-    itemsCompra = [];
-    renderTablaItems();
-    document.getElementById('dateFecha').valueAsDate = new Date();
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ERP Arzuka</title>
     
-    // Mostrar estado de carga en los selects
-    const selects = ['selectProveedorCompra', 'selectAlmacen', 'selectTipoComp', 'selectFormaPagoCompra', 'selectEstadoCompra'];
-    selects.forEach(id => document.getElementById(id).innerHTML = '<option>Cargando...</option>');
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
 
-    new bootstrap.Modal(document.getElementById('modalNuevaCompra')).show();
+    <div id="login-overlay" style="position: fixed; top:0; left:0; width:100%; height:100%; background: #0d6efd; z-index: 9999; display: flex; justify-content: center; align-items: center;">
+        <div class="card p-4 shadow-lg" style="width: 350px; border-radius: 15px;">
+            <div class="text-center mb-4">
+                <h3 class="fw-bold text-primary"><i class="bi bi-box-seam-fill"></i> ERP ARZUKA</h3>
+                <p class="text-muted">Acceso Restringido</p>
+            </div>
+            <div class="mb-3">
+                <label class="fw-bold small">Usuario</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-person"></i></span>
+                    <input type="text" id="loginUser" class="form-control" placeholder="admin">
+                </div>
+            </div>
+            <div class="mb-4">
+                <label class="fw-bold small">Contraseña</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-key"></i></span>
+                    <input type="password" id="loginPass" class="form-control" placeholder="********">
+                </div>
+            </div>
+            <div class="text-danger text-center mb-3 small fw-bold" id="loginError"></div>
+            <button id="btnLogin" class="btn btn-primary w-100 py-2" onclick="iniciarSesion()">INGRESAR</button>
+        </div>
+    </div>
 
-    // Llamar a la API
-    // Nota: Usamos 'proveedores' como servicio porque está en el mismo script del backend por ahora.
-    // Si separaste el script de compras en otro proyecto de Apps Script, crea una entrada en config.js
-    const datos = await callAPI('proveedores', 'obtenerDatosCompra'); 
-    
-    if(datos.success) {
-        poblarSelect('selectProveedorCompra', datos.proveedores, 'id', 'nombre');
-        poblarSelect('selectAlmacen', datos.almacenes, 'cod', 'nombre');
-        poblarSelect('selectTipoComp', datos.listas.Tipo_Comprobante);
-        poblarSelect('selectFormaPagoCompra', datos.listas.Forma_Pago); // Nota: Ajusta si la clave en GAS es "Forma de Pago" o "Forma_Pago"
-        poblarSelect('selectEstadoCompra', datos.listas.Estado_Compra);
-    } else {
-        alert("Error cargando datos: " + datos.error);
-    }
-}
+    <nav id="sidebar">
+        <div class="logo"><i class="bi bi-box-seam-fill"></i> ERP ARZUKA</div>
+        <div class="text-center mt-3 mb-2">
+            <div class="small text-white-50">Hola,</div>
+            <div id="lblUsuarioActual" class="fw-bold text-white">Cargando...</div>
+        </div>
+        <ul>
+            <li><a onclick="nav('inicio')" id="link-inicio" class="active"><i class="bi bi-speedometer2"></i> Inicio</a></li>
+            <li><a onclick="nav('proveedores')" id="link-proveedores"><i class="bi bi-people-fill"></i> Proveedores</a></li>
+            <li><a onclick="nav('usuarios')" id="link-usuarios"><i class="bi bi-person-badge-fill"></i> Usuarios</a></li>
+            <li><a onclick="nav('configuracion')" id="link-configuracion"><i class="bi bi-gear-fill"></i> Configuración</a></li>
+            <li><a onclick="cerrarSesion()" class="text-danger"><i class="bi bi-box-arrow-left"></i> Salir</a></li>
+        </ul>
+    </nav>
 
-function poblarSelect(id, datos, keyVal = null, keyText = null) {
-    const sel = document.getElementById(id);
-    if(!sel) return;
-    sel.innerHTML = '<option value="">Seleccione...</option>';
-    
-    if(Array.isArray(datos)) {
-        datos.forEach(d => {
-            // Si el dato es objeto (como proveedores) usamos keys, si es string simple (listas) usamos el valor directo
-            let val = keyVal ? d[keyVal] : d;
-            let txt = keyText ? d[keyText] : d;
-            sel.innerHTML += `<option value="${val}">${txt}</option>`;
-        });
-    }
-}
+    <div id="content">
+        <div class="top-bar d-md-none d-flex justify-content-between align-items-center p-3 bg-white shadow-sm">
+            <span class="fw-bold text-primary">ERP</span>
+            <button class="btn btn-light border" onclick="toggleSidebar()"><i class="bi bi-list h4 m-0"></i></button>
+        </div>
 
-// --- CÁLCULOS ---
-function calcularCostoItem() {
-    const cant = parseFloat(document.getElementById('itemCantidad').value) || 0;
-    const total = parseFloat(document.getElementById('itemTotal').value) || 0;
-    const unitInput = document.getElementById('itemUnitario');
-    
-    if(cant > 0 && total > 0) {
-        unitInput.value = (total / cant).toFixed(2);
-    } else {
-        unitInput.value = "";
-    }
-}
+        <div id="main-area">
+            <div id="view-inicio" class="view-section active">
+                <h2 class="mb-4">Panel de Control</h2>
+                <div class="row g-3">
+                    <div class="col-12 col-md-4">
+                        <div class="card-dashboard text-center h-100">
+                            <h1 class="text-primary"><i class="bi bi-people"></i></h1>
+                            <h5>Proveedores</h5>
+                            <p class="text-muted small">Gestión de socios</p>
+                            <button class="btn btn-outline-primary w-100" onclick="nav('proveedores')">Ir al módulo</button>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <div class="card-dashboard text-center h-100">
+                            <h1 class="text-warning"><i class="bi bi-shield-lock"></i></h1>
+                            <h5>Seguridad</h5>
+                            <p class="text-muted small">Usuarios y Roles</p>
+                            <button class="btn btn-outline-warning w-100" onclick="nav('usuarios')">Gestionar</button>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <div class="card-dashboard text-center h-100">
+                            <h1 class="text-success"><i class="bi bi-cart"></i></h1>
+                            <h5>Compras</h5>
+                            <p class="text-muted small">Registro de gastos</p>
+                            <button class="btn btn-success w-100" onclick="abrirModalCompra()">
+                                <i class="bi bi-plus-lg"></i> Nueva Compra
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-function agregarItem() {
-    const tipo = document.getElementById('itemTipo').value;
-    const desc = document.getElementById('itemDesc').value;
-    const cant = parseFloat(document.getElementById('itemCantidad').value);
-    const unidad = document.getElementById('itemUnidad').value;
-    const total = parseFloat(document.getElementById('itemTotal').value);
-    const unit = parseFloat(document.getElementById('itemUnitario').value);
+            <div id="view-proveedores" class="view-section">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h2>Proveedores</h2>
+                    <div>
+                        <button class="btn btn-secondary me-2" onclick="cargarProveedores()">Refrescar</button>
+                        <button class="btn btn-primary" onclick="abrirModalNuevoProveedor()">+ Nuevo</button>
+                    </div>
+                </div>
+                <div class="card-dashboard p-0"><table class="table table-hover align-middle mb-0"><thead class="table-light"><tr><th>Empresa</th><th>ID</th><th>Teléfono</th><th>Acción</th></tr></thead><tbody id="cuerpoTablaProv"></tbody></table></div>
+            </div>
 
-    if(!desc || !cant || !total) {
-        alert("Por favor completa Descripción, Cantidad y Total del item.");
-        return;
-    }
+            <div id="view-usuarios" class="view-section">
+                <h2>Gestión de Acceso</h2>
+                <ul class="nav nav-tabs mb-3 mt-4" id="tabUsuarios" role="tablist">
+                    <li class="nav-item" role="presentation"><button class="nav-link active" id="tab-empleados" data-bs-toggle="tab" data-bs-target="#content-empleados" type="button">Empleados</button></li>
+                    <li class="nav-item" role="presentation"><button class="nav-link" id="tab-roles" data-bs-toggle="tab" data-bs-target="#content-roles" type="button" onclick="cargarRoles()">Roles</button></li>
+                </ul>
+                <div class="tab-content">
+                    <div class="tab-pane fade show active" id="content-empleados">
+                        <div class="d-flex justify-content-end mb-3"><button class="btn btn-primary" onclick="abrirModalUsuario()">Nuevo Empleado</button></div>
+                        <div class="card-dashboard p-0"><table class="table table-hover align-middle mb-0"><thead class="table-light"><tr><th>Nombre</th><th>Correo</th><th>Rol</th><th>Estado</th><th>Acción</th></tr></thead><tbody id="cuerpoTablaUsuarios"></tbody></table></div>
+                    </div>
+                    <div class="tab-pane fade" id="content-roles">
+                        <div class="d-flex justify-content-end mb-3"><button class="btn btn-success" onclick="abrirModalRol()">Nuevo Rol</button></div>
+                        <div class="card-dashboard p-0"><table class="table table-hover align-middle mb-0"><thead class="table-light"><tr><th>Rol</th><th>Permisos</th><th>Acción</th></tr></thead><tbody id="cuerpoTablaRoles"></tbody></table></div>
+                    </div>
+                </div>
+            </div>
 
-    itemsCompra.push({
-        tipoCompra: tipo,
-        descripcion: desc,
-        cantidad: cant,
-        unidadCompra: unidad,
-        costoTotal: total,
-        costoUnitario: unit || (total/cant)
-    });
+        </div>
+    </div>
 
-    renderTablaItems();
-    
-    // Limpiar campos de item
-    document.getElementById('itemDesc').value = "";
-    document.getElementById('itemCantidad').value = "";
-    document.getElementById('itemTotal').value = "";
-    document.getElementById('itemUnitario').value = "";
-    document.getElementById('itemUnidad').value = "";
-    document.getElementById('itemDesc').focus();
-}
+    <div class="modal fade" id="modalNuevaCompra" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">Registrar Compra</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formCompra">
+                        <div class="row g-3 mb-4 bg-light p-3 rounded border">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Proveedor</label>
+                                <select id="selectProveedorCompra" class="form-select"></select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Tipo Doc.</label>
+                                <select id="selectTipoComp" class="form-select"></select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">N° Documento</label>
+                                <input type="text" id="txtNumComp" class="form-control">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Fecha</label>
+                                <input type="date" id="dateFecha" class="form-control">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Almacén</label>
+                                <select id="selectAlmacen" class="form-select"></select>
+                            </div>
+                             <div class="col-md-3">
+                                <label class="form-label">Forma Pago</label>
+                                <select id="selectFormaPagoCompra" class="form-select"></select>
+                            </div>
+                             <div class="col-md-3">
+                                <label class="form-label">Estado</label>
+                                <select id="selectEstadoCompra" class="form-select"></select>
+                            </div>
+                             <div class="col-md-3">
+                                <label class="form-label fw-bold text-success">Importe Total</label>
+                                <input type="number" id="txtImporteTotal" class="form-control border-success">
+                            </div>
+                             <div class="col-md-9">
+                                <label class="form-label">Comentario</label>
+                                <input type="text" id="txtComentarioCompra" class="form-control">
+                            </div>
+                        </div>
 
-function renderTablaItems() {
-    const tbody = document.getElementById('bodyTablaItems');
-    tbody.innerHTML = "";
-    let granTotal = 0;
+                        <h6 class="text-primary fw-bold border-bottom pb-2">Items de la Compra</h6>
+                        <div class="row g-2 align-items-end mb-3">
+                            <div class="col-md-2">
+                                <label class="small">Tipo</label>
+                                <select id="itemTipo" class="form-select form-select-sm">
+                                    <option value="Insumo">Insumo</option>
+                                    <option value="Gasto">Gasto</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="small">Descripción</label>
+                                <input type="text" id="itemDesc" class="form-control form-control-sm" placeholder="Nombre del producto">
+                            </div>
+                            <div class="col-md-1">
+                                <label class="small">Cant.</label>
+                                <input type="number" id="itemCantidad" class="form-control form-control-sm" oninput="calcularCostoItem()">
+                            </div>
+                            <div class="col-md-1">
+                                <label class="small">Unid.</label>
+                                <input type="text" id="itemUnidad" class="form-control form-control-sm" placeholder="UND">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="small">Costo Total</label>
+                                <input type="number" id="itemTotal" class="form-control form-control-sm" oninput="calcularCostoItem()">
+                            </div>
+                            <div class="col-md-1">
+                                <label class="small">Unit.</label>
+                                <input type="text" id="itemUnitario" class="form-control form-control-sm" readonly style="background-color: #e9ecef;">
+                            </div>
+                            <div class="col-md-1">
+                                <button type="button" class="btn btn-info btn-sm w-100 text-white" onclick="agregarItem()"><i class="bi bi-plus-lg"></i></button>
+                            </div>
+                        </div>
 
-    itemsCompra.forEach((item, idx) => {
-        granTotal += item.costoTotal;
-        tbody.innerHTML += `
-            <tr>
-                <td><span class="badge bg-light text-dark border">${item.tipoCompra}</span></td>
-                <td>${item.descripcion}</td>
-                <td>${item.cantidad} ${item.unidadCompra || 'und'}</td>
-                <td class="text-end">${item.costoTotal.toFixed(2)}</td>
-                <td class="text-center"><button class="btn btn-danger btn-sm py-0" onclick="eliminarItem(${idx})">&times;</button></td>
-            </tr>
-        `;
-    });
+                        <div class="table-responsive border rounded">
+                            <table class="table table-sm table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Tipo</th>
+                                        <th>Descripción</th>
+                                        <th>Cant.</th>
+                                        <th class="text-end">Total</th>
+                                        <th class="text-center">Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="bodyTablaItems"></tbody>
+                                <tfoot class="table-light">
+                                    <tr>
+                                        <td colspan="3" class="text-end fw-bold">Total Calculado:</td>
+                                        <td class="text-end fw-bold text-success" id="lblGranTotal">0.00</td>
+                                        <td></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
 
-    document.getElementById('lblGranTotal').innerText = granTotal.toFixed(2);
-    // Opcional: Actualizar el importe total de cabecera automáticamente
-    // document.getElementById('txtImporteTotal').value = granTotal.toFixed(2);
-}
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-success" id="btnGuardarCompra" onclick="guardarCompra()">Guardar Compra</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-function eliminarItem(idx) {
-    itemsCompra.splice(idx, 1);
-    renderTablaItems();
-}
+    <div class="modal fade" id="modalFormularioProveedor" tabindex="-1" data-bs-backdrop="static"><div class="modal-dialog modal-xl"><div class="modal-content"><div class="modal-header bg-primary text-white"><h5 class="modal-title" id="modalTituloProveedor">Registrar Proveedor</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="formProveedor"><input type="hidden" id="ID_Proveedor"><div class="form-section-title">Datos Principales</div><div class="row g-3"><div class="col-md-4"><label class="form-label">Tipo</label><select id="tipoProveedor" class="form-select" onchange="toggleDocumento()"><option value="Formal">Formal (RUC)</option><option value="Informal">Informal (DNI)</option></select></div><div class="col-md-4"><label class="form-label" id="lblDoc">RUC</label><input type="number" class="form-control" id="txtDocumento"></div><div class="col-md-4"><label class="form-label">Teléfono Principal</label><input type="text" class="form-control" id="telefonoPrincipal"></div><div class="col-md-6"><label class="form-label">Razón Social</label><input type="text" class="form-control" id="razonSocial"></div><div class="col-md-6"><label class="form-label">Nombre Comercial</label><input type="text" class="form-control" id="nombreComercial"></div><div class="col-md-12"><label class="form-label">Domicilio Fiscal</label><input type="text" class="form-control" id="domicilioFiscal"></div></div><div class="form-section-title mt-4">Información Financiera</div><div class="row g-3 align-items-center"><div class="col-md-2"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="aceptaCredito"><label class="form-check-label">¿Crédito?</label></div></div><div class="col-md-2"><label class="form-label">Días Crédito</label><input type="number" class="form-control" id="diasCredito" value="0"></div><div class="col-md-8"><label class="form-label">Métodos de Pago</label><div id="divFormasPago" class="d-flex flex-wrap gap-3 border rounded p-2 bg-light"></div></div><div class="col-md-6"><label class="form-label">N° Cuenta</label><input type="text" class="form-control" id="nroCuenta"></div><div class="col-md-6"><label class="form-label">Yape / Plin</label><input type="text" class="form-control" id="nroYapePlin"></div></div><div class="form-section-title d-flex justify-content-between align-items-center mt-4"><span>Sucursales</span><div class="input-group" style="width: 200px;"><span class="input-group-text">Cantidad</span><input type="number" class="form-control" id="numSucursales" value="0" min="0" onchange="renderSucursales()"></div></div><div id="contenedorSucursales" class="mt-2"></div></form></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" onclick="guardarProveedorCompleto()">💾 Guardar</button></div></div></div></div>
 
-// --- GUARDAR ---
-async function guardarCompra() {
-    const btn = document.getElementById('btnGuardarCompra');
-    const originalText = btn.innerText;
-    btn.disabled = true; btn.innerText = "Enviando...";
+    <div class="modal fade" id="modalNuevoUsuario" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-primary text-white"><h5 class="modal-title" id="tituloModalUser">Nuevo Empleado</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="formUsuario"><input type="hidden" id="idUserEdicion"><div class="mb-3"><label class="form-label">Nombre Completo</label><input type="text" class="form-control" id="txtUserNombre"></div><div class="mb-3"><label class="form-label">Correo</label><input type="text" class="form-control" id="txtUserCorreo"></div><div class="mb-3"><label class="form-label">Rol</label><select class="form-select" id="txtUserRol"></select></div><div class="mb-3 bg-light p-3 rounded"><label class="form-label fw-bold">Seguridad</label><input type="text" class="form-control" id="txtUserPass" value="12345678" disabled><div class="form-text" id="helpPass">Contraseña por defecto: 12345678</div></div></form></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" onclick="guardarUsuario()">Guardar Empleado</button></div></div></div></div>
 
-    // 1. Validaciones
-    const prov = document.getElementById('selectProveedorCompra').value;
-    const totalCabecera = document.getElementById('txtImporteTotal').value;
-    
-    if(!prov) {
-        alert("Debes seleccionar un proveedor.");
-        btn.disabled = false; btn.innerText = originalText;
-        return;
-    }
-    if(itemsCompra.length === 0) {
-        alert("Debes agregar al menos un producto.");
-        btn.disabled = false; btn.innerText = originalText;
-        return;
-    }
+    <div class="modal fade" id="modalNuevoRol" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-success text-white"><h5 class="modal-title" id="tituloModalRol">Configurar Rol</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="hidden" id="idRolEdicion"><div class="mb-3"><label class="fw-bold">Nombre del Rol</label><input type="text" class="form-control" id="txtNombreRol"></div><div class="card mb-3"><div class="card-header bg-light fw-bold text-primary">TPV</div><div class="card-body"><div class="form-check form-switch mb-2"><input class="form-check-input check-permiso" type="checkbox" value="TPV_ACCESO" id="p_tpv_acceso"><label class="form-check-label" for="p_tpv_acceso">Acceso a la App</label></div><div class="ps-4"><div class="form-check"><input class="form-check-input check-permiso" type="checkbox" value="TPV_ACEPTAR_PAGOS"><label>Aceptar Pagos</label></div></div></div></div></div><div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-success" onclick="guardarRol()">Guardar Rol</button></div></div></div></div>
 
-    // 2. Armar Payload
-    const cabecera = {
-        proveedorId: prov,
-        proveedorNombre: document.getElementById('selectProveedorCompra').selectedOptions[0].text,
-        tipoComprobante: document.getElementById('selectTipoComp').value,
-        numeroComprobante: document.getElementById('txtNumComp').value,
-        fechaEmision: document.getElementById('dateFecha').value,
-        almacenDestino: document.getElementById('selectAlmacen').value,
-        importeTotal: totalCabecera ? parseFloat(totalCabecera) : 0,
-        formaPago: document.getElementById('selectFormaPagoCompra').value,
-        estadoCompra: document.getElementById('selectEstadoCompra').value,
-        comentario: document.getElementById('txtComentarioCompra').value
-    };
+    <datalist id="listaGlobalZonas"></datalist>
+    <datalist id="listaGlobalUrbanizaciones"></datalist>
 
-    const payload = {
-        datosComprobante: cabecera,
-        items: itemsCompra
-    };
-
-    // 3. Enviar
-    const res = await callAPI('proveedores', 'guardarCompra', payload);
-    
-    if(res.success) {
-        alert("✅ " + res.message);
-        bootstrap.Modal.getInstance(document.getElementById('modalNuevaCompra')).hide();
-    } else {
-        alert("❌ Error: " + res.error);
-    }
-    
-    btn.disabled = false; btn.innerText = originalText;
-}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/core.js"></script>
+    <script src="js/proveedores.js"></script>
+    <script src="js/usuarios.js"></script>
+    <script src="js/compras.js"></script>
+    <script src="js/configuracion.js"></script>
+</body>
+</html>
